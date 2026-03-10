@@ -1,0 +1,37 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--colorNeutralBackground2);
+  border-right: 1px solid var(--colorNeutralStroke2);
+  padding: 1rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-sidebar__nav {
+  flex: 1;
+}
+
+.app-sidebar .fui-Button {
+  margin-top: auto;
+}
+
+.app-main {
+  flex: 1;
+  overflow: auto;
+}
+
+.page-content {
+  padding: 2rem;
+}
+
+.page-content h1 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}

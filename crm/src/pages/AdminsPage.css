@@ -1,0 +1,111 @@
+.admins-page {
+  padding: 1.5rem;
+}
+
+.admins-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.admins-page__header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.admins-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admins-page__item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+.admins-page__login {
+  font-weight: 500;
+  flex: 1;
+}
+
+.admins-page__date {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.admins-page__actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.admins-page__empty {
+  color: #666;
+  margin: 0;
+}
+
+/* Редактирование учётных данных */
+.admins-edit-dialog {
+  --dialog-width: 420px;
+}
+
+.admins-edit-dialog .admins-edit-dialog__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.admins-edit-dialog__subtitle {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #605e5c; /* Fluent NeutralForeground3 — приглушённый серый */
+  margin-top: 0.25rem;
+}
+
+.admins-edit-dialog__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admins-edit-dialog__section-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--colorNeutralForeground1);
+}
+
+.admins-edit-dialog__section-hint {
+  margin: -0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #605e5c; /* Fluent NeutralForeground3 — приглушённый серый */
+}
+
+.admins-edit-dialog__divider {
+  margin: 0.25rem 0;
+}
+
+.admins-edit-dialog__actions {
+  padding-top: 1rem;
+  border-top: 1px solid var(--colorNeutralStroke2);
+}
+
+/* Цвет текста при автоподстановке логина/пароля браузером */
+.admins-page input:-webkit-autofill,
+.admins-page input:-webkit-autofill:hover,
+.admins-page input:-webkit-autofill:focus,
+.admins-page input:-webkit-autofill:active,
+.admins-edit-dialog input:-webkit-autofill,
+.admins-edit-dialog input:-webkit-autofill:hover,
+.admins-edit-dialog input:-webkit-autofill:focus,
+.admins-edit-dialog input:-webkit-autofill:active {
+  -webkit-text-fill-color: #000 !important;
+  caret-color: #000;
+}

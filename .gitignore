@@ -1,0 +1,14 @@
+# Local config (never commit secrets)
+TestAspire.Server/appsettings.Local.json
+**/appsettings.Local.json
+
+# Build
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node
+node_modules/
+dist/

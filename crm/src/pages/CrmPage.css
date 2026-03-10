@@ -1,0 +1,131 @@
+.crm-page {
+  padding: 2rem;
+  max-width: 720px;
+}
+
+.crm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.crm-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.crm-loading {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.crm-message {
+  margin-bottom: 1rem;
+}
+
+.crm-tree-container {
+  border: 1px solid var(--colorNeutralStroke2);
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: var(--colorNeutralBackground1);
+}
+
+.crm-empty {
+  color: var(--colorNeutralForeground3);
+  padding: 2rem;
+  margin: 0;
+}
+
+.crm-inv-title-row {
+  display: block;
+}
+
+.crm-inv-link-row {
+  margin-top: 0.25rem;
+}
+
+.crm-inv-link {
+  font-size: 0.75rem;
+  color: var(--colorNeutralForeground3);
+  cursor: pointer;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.crm-inv-link:hover {
+  color: var(--colorNeutralForeground1);
+  text-decoration: underline;
+}
+
+.crm-guest-count {
+  color: var(--colorNeutralForeground3);
+  font-size: 0.875em;
+}
+
+.crm-inv-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.crm-guest-phone {
+  color: var(--colorNeutralForeground3);
+  font-size: 0.875em;
+  margin-left: 0.25rem;
+}
+
+.crm-add-guest-form,
+.crm-edit-inv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.crm-greeting-preview {
+  font-size: 0.875rem;
+  color: var(--colorNeutralForeground3);
+}
+
+/* Подтверждённые приглашения и гости — зелёный фон */
+.crm-inv--confirmed,
+.crm-guest--confirmed {
+  background: #d4edda;
+}
+
+/* Неподтверждённые приглашения и гости — красный фон */
+.crm-inv--unconfirmed,
+.crm-guest--unconfirmed {
+  background: #f8d7da;
+}
+
+.crm-survey-responses {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.crm-survey-response-title {
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.crm-survey-response-item {
+  margin-left: 0.5rem;
+}
+
+.crm-survey-question {
+  color: var(--colorNeutralForeground2);
+}
+
+.crm-survey-answer {
+  color: var(--colorNeutralForeground1);
+}
+

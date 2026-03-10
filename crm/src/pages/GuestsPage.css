@@ -1,0 +1,45 @@
+.guests-page {
+  padding: 1rem;
+}
+
+.guests-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.guests-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.guests-header h1 {
+  margin: 0;
+}
+
+.guests-message {
+  margin-bottom: 1rem;
+}
+
+.guests-empty {
+  color: var(--colorNeutralForeground3);
+  padding: 2rem;
+}
+
+.guests-list {
+  margin-top: 1rem;
+}
+
+.guests-list table {
+  width: 100%;
+}
+
+.guests-row--confirmed {
+  background: #d4edda;
+}
+
+.guests-row--unconfirmed {
+  background: #f8d7da;
+}

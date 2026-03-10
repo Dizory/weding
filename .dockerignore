@@ -1,0 +1,9 @@
+node_modules
+**/bin
+**/obj
+**/.git
+**/.vs
+**/aspire-output
+*.md
+.env*
+.gitignore

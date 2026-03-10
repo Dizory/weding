@@ -1,0 +1,46 @@
+services:
+  cache:
+    image: "docker.io/library/redis:8.2"
+    command:
+      - "-c"
+      - "redis-server --requirepass $$REDIS_PASSWORD"
+    entrypoint:
+      - "/bin/sh"
+    environment:
+      REDIS_PASSWORD: "${CACHE_PASSWORD:-1@Rdent1996}"
+    expose:
+      - "6379"
+  server:
+    image: "${SERVER_IMAGE:-ghcr.io/dizory/testaspire-server:latest}"
+    environment:
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
+      OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      HTTP_PORTS: "${SERVER_PORT:-8080}"
+      ConnectionStrings__cache: "cache:6379,password=${CACHE_PASSWORD:-1@Rdent1996}"
+      CACHE_HOST: "cache"
+      CACHE_PORT: "6379"
+      CACHE_PASSWORD: "${CACHE_PASSWORD:-1@Rdent1996}"
+      CACHE_URI: "redis://:${CACHE_PASSWORD:-1@Rdent1996}@cache:6379"
+      ConnectionStrings__invitations: "Data Source=/data/invitations.db;Cache=Shared;Mode=ReadWriteCreate"
+      ASPNETCORE_APPLICATION_URL: "https://weding.zorin-server.ru"
+      Crm__DefaultAdminLogin: "${Crm__DefaultAdminLogin:-}"
+      Crm__DefaultAdminPassword: "${Crm__DefaultAdminPassword:-}"
+      Crm__JwtSecret: "${Crm__JwtSecret:-}"
+    ports:
+      - "${SERVER_PORT:-8080}"
+    depends_on:
+      cache:
+        condition: "service_started"
+    volumes:
+      - invitations-data:/data
+  crm:
+    image: "${CRM_IMAGE:-ghcr.io/dizory/testaspire-crm:latest}"
+    ports:
+      - "80"
+    depends_on:
+      server:
+        condition: "service_started"
+volumes:
+  invitations-data: {}

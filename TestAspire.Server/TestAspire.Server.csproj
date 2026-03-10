@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.1.2" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="CommunityToolkit.Aspire.Microsoft.EntityFrameworkCore.Sqlite" Version="9.7.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.1.0" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="10.1.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0" />
+  </ItemGroup>
+
+  <!-- РЎР±РѕСЂРєР° frontend РІ wwwroot РґР»СЏ Р»РѕРєР°Р»СЊРЅРѕР№ СЂР°Р·СЂР°Р±РѕС‚РєРё (Aspire). Release/Docker СЃРѕР±РёСЂР°РµС‚ frontend РѕС‚РґРµР»СЊРЅРѕ. -->
+  <Target Name="BuildFrontendForDev" BeforeTargets="Build" Condition="'$(Configuration)' != 'Release' AND Exists('$(MSBuildThisFileDirectory)../frontend/package.json')">
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildThisFileDirectory)../frontend" />
+    <ItemGroup>
+      <_FrontendDist Include="$(MSBuildThisFileDirectory)../frontend/dist/**/*" />
+    </ItemGroup>
+    <!-- ASP.NET Core serves static files from project wwwroot in development. -->
+    <Copy SourceFiles="@(_FrontendDist)" DestinationFolder="$(MSBuildThisFileDirectory)wwwroot/%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <!-- Keep output wwwroot too for direct executable runs. -->
+    <Copy SourceFiles="@(_FrontendDist)" DestinationFolder="$(OutputPath)wwwroot/%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

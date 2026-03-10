@@ -1,0 +1,38 @@
+# CI/CD для TestAspire — сборка и публикация образа server
+# Переменные (настроить в Gitflic: Настройки → CI/CD → Переменные):
+#   USER — логин или имя пользователя/группы
+#   PROJECT — имя проекта в реестре
+#   CI_REGISTRY, CI_REGISTRY_USER, CI_REGISTRY_PASSWORD — обычно задаются автоматически
+
+docker-build:
+  image: docker:cli
+  stage: build
+
+  variables:
+    USER: ardent
+    PROJECT: testaspire
+    IMAGE_NAME: server
+
+  services:
+    - docker:dind
+
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+  script:
+    - export REGISTRY="${CI_REGISTRY:-registry.gitflic.ru}"
+    - export FULL_IMAGE="$REGISTRY/project/$USER/$PROJECT/$IMAGE_NAME"
+    - docker build -t "$FULL_IMAGE:$CI_COMMIT_SHA" .
+    - docker push "$FULL_IMAGE:$CI_COMMIT_SHA"
+    - |
+      if [ "$CI_COMMIT_REF_NAME" = "$CI_DEFAULT_BRANCH" ]; then
+        docker tag "$FULL_IMAGE:$CI_COMMIT_SHA" "$FULL_IMAGE:latest"
+        docker push "$FULL_IMAGE:latest"
+      fi
+
+  # Опционально: webhook для Coolify — раскомментируйте и укажите URL
+  # after_script:
+  #   - |
+  #     if [ "$CI_COMMIT_REF_NAME" = "$CI_DEFAULT_BRANCH" ]; then
+  #       curl -X POST "$COOLIFY_WEBHOOK_URL" || true
+  #     fi

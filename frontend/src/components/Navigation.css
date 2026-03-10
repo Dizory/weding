@@ -1,0 +1,79 @@
+.nav {
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  background: rgba(171, 200, 187, 0.9);
+}
+
+.nav__inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nav__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(171, 200, 187, 0.9);
+  color: #333;
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.nav__toggle:hover {
+  background: rgba(171, 200, 187, 1);
+}
+
+.nav__toggle:focus-visible {
+  outline: 2px solid #6A6B4B;
+  outline-offset: 2px;
+}
+
+.nav__menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  min-width: 180px;
+  padding: 0.5rem 0;
+  background: rgba(171, 200, 187, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nav__menu--open {
+  display: flex;
+}
+
+.nav__link {
+  display: block;
+  padding: 0.6rem 1rem;
+  color: #333;
+  text-decoration: none;
+  font-family: 'Gruppo', sans-serif;
+  transition: background-color 0.2s;
+  font-size: 1.25rem;
+}
+
+.nav__link:hover,
+.nav__link:focus-visible {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.nav__link:focus-visible {
+  outline: none;
+}

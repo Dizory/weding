@@ -1,0 +1,145 @@
+.surveys-page {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.surveys-message {
+  margin-bottom: 1rem;
+}
+
+.surveys-layout {
+  display: flex;
+  gap: 1.5rem;
+  min-height: 400px;
+}
+
+.surveys-sidebar {
+  flex: 0 0 260px;
+  border-right: 1px solid var(--colorNeutralStroke2);
+  padding-right: 1rem;
+}
+
+.surveys-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.surveys-sidebar-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.surveys-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.surveys-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  gap: 0.5rem;
+}
+
+.surveys-list-item:hover {
+  background: var(--colorNeutralBackground1Hover);
+}
+
+.surveys-list-item.selected {
+  background: var(--colorNeutralBackground1Selected);
+}
+
+.surveys-list-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surveys-list-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.surveys-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.surveys-main-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.surveys-main-hint {
+  color: var(--colorNeutralForeground3);
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+}
+
+.surveys-empty {
+  color: var(--colorNeutralForeground3);
+  padding: 2rem;
+  text-align: center;
+}
+
+.surveys-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.surveys-question-block {
+  border: 1px solid var(--colorNeutralStroke2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.surveys-question-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--colorNeutralBackground3);
+}
+
+.surveys-question-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.surveys-question-type {
+  font-size: 0.75rem;
+  color: var(--colorNeutralForeground3);
+}
+
+.surveys-question-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.surveys-options {
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.surveys-option-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.surveys-option-text {
+  flex: 1;
+}
