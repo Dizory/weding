@@ -6,7 +6,7 @@ const SECTIONS = [
   { id: 'palitra', label: 'Палитра' },
   { id: 'podtverzhdenie', label: 'Подтверждение' },
   { id: 'opros', label: 'Опрос' },
-  { id: 'raspisanie', label: 'Расписание' },
+  { id: 'raspisanie', label: 'Место встречи' },
 ] as const
 
 export function Navigation() {
