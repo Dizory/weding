@@ -184,7 +184,7 @@ export function Content() {
           <div className='final_text'>
             <span className='tab'>Примечание<br /></span>
             <span>
-              Будем благодарны, если вы <br />
+              Будем благодарны, если Вы <br />
               воздержитесь от криков «Горько!» на <br />
               празднике.<br /><br />
             </span>
@@ -204,7 +204,7 @@ export function Content() {
             <span>
               Будем благодарны, если при<br />
               выборе нарядов на наше<br />
-              торжество вы придержитесь<br />
+              торжество Вы придержитесь<br />
               следующей палитры<br />
             </span>
             <div className='palira'>
@@ -258,7 +258,7 @@ export function Content() {
         <div className='header_qw'>
           <div className='header_qw_text'>
             <span>Пожалуйста, ответьте на вопросы,</span>
-            <span className='header_qw_text_line2'>которые мы для вас подготовили:</span>
+            <span className='header_qw_text_line2'>которые мы для Вас подготовили:</span>
           </div>
         </div>
         {surveys.map((survey) => (
@@ -337,7 +337,7 @@ export function Content() {
       </div>
       <div className='text_invite' id="raspisanie">
         <div className='final_text'>
-          <span className='tab'>Будем ждать вас</span>
+          <span className='tab'>Будем ждать Вас</span>
           <table className='timetable'>
             <tbody>
               <tr>
