@@ -33,6 +33,7 @@ import {
   createQuestion,
   updateQuestion,
   deleteQuestion,
+  reorderQuestions,
   createOption,
   updateOption,
   deleteOption
@@ -68,6 +69,7 @@ export default function SurveysPage() {
   const [editOptionText, setEditOptionText] = useState('')
   const [updatingOption, setUpdatingOption] = useState(false)
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set())
+  const [dragQuestionId, setDragQuestionId] = useState<number | null>(null)
 
   useEffect(() => {
     fetchSurveys()
@@ -157,9 +159,9 @@ export default function SurveysPage() {
       setSelectedSurvey((s) =>
         s
           ? {
-              ...s,
-              questions: [...s.questions, q].sort((a, b) => a.sortOrder - b.sortOrder)
-            }
+            ...s,
+            questions: [...s.questions, q].sort((a, b) => a.sortOrder - b.sortOrder)
+          }
           : null
       )
       setAddQuestionOpen(false)
@@ -182,11 +184,11 @@ export default function SurveysPage() {
       setSelectedSurvey((s) =>
         s
           ? {
-              ...s,
-              questions: s.questions.map((q) =>
-                q.id === editQuestionOpen.id ? { ...q, text: editQuestionText.trim(), choiceType: editQuestionType } : q
-              )
-            }
+            ...s,
+            questions: s.questions.map((q) =>
+              q.id === editQuestionOpen.id ? { ...q, text: editQuestionText.trim(), choiceType: editQuestionType } : q
+            )
+          }
           : null
       )
       setEditQuestionOpen(null)
@@ -217,11 +219,11 @@ export default function SurveysPage() {
       setSelectedSurvey((s) =>
         s
           ? {
-              ...s,
-              questions: s.questions.map((q) =>
-                q.id === addOptionOpen.id ? { ...q, options: [...q.options, o].sort((a, b) => a.sortOrder - b.sortOrder) } : q
-              )
-            }
+            ...s,
+            questions: s.questions.map((q) =>
+              q.id === addOptionOpen.id ? { ...q, options: [...q.options, o].sort((a, b) => a.sortOrder - b.sortOrder) } : q
+            )
+          }
           : null
       )
       setAddOptionOpen(null)
@@ -242,13 +244,13 @@ export default function SurveysPage() {
       setSelectedSurvey((s) =>
         s
           ? {
-              ...s,
-              questions: s.questions.map((q) =>
-                q.id === editOptionOpen.q.id
-                  ? { ...q, options: q.options.map((o) => (o.id === editOptionOpen.o.id ? { ...o, text: editOptionText.trim() } : o)) }
-                  : q
-              )
-            }
+            ...s,
+            questions: s.questions.map((q) =>
+              q.id === editOptionOpen.q.id
+                ? { ...q, options: q.options.map((o) => (o.id === editOptionOpen.o.id ? { ...o, text: editOptionText.trim() } : o)) }
+                : q
+            )
+          }
           : null
       )
       setEditOptionOpen(null)
@@ -281,6 +283,33 @@ export default function SurveysPage() {
     })
   }
 
+  const handleQuestionDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleQuestionDrop = async (targetId: number) => {
+    if (!selectedSurvey || !dragQuestionId || dragQuestionId === targetId) {
+      setDragQuestionId(null)
+      return
+    }
+    const sorted = [...selectedSurvey.questions].sort((a, b) => a.sortOrder - b.sortOrder)
+    const fromIdx = sorted.findIndex((q) => q.id === dragQuestionId)
+    const toIdx = sorted.findIndex((q) => q.id === targetId)
+    if (fromIdx === -1 || toIdx === -1) { setDragQuestionId(null); return }
+    const reordered = [...sorted]
+    const [moved] = reordered.splice(fromIdx, 1)
+    reordered.splice(toIdx, 0, moved)
+    const orders = reordered.map((q, idx) => ({ questionId: q.id, sortOrder: idx }))
+    try {
+      await reorderQuestions(selectedSurvey.id, orders)
+      setSelectedSurvey((s) => s ? { ...s, questions: reordered } : null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка сортировки')
+    }
+    setDragQuestionId(null)
+  }
+
   if (loading) {
     return (
       <div className="surveys-page">
@@ -310,9 +339,9 @@ export default function SurveysPage() {
               appearance="primary"
               icon={<Add24Regular />}
               onClick={() => {
-      setCreateOpen(true)
-              setNewTitle('')
-              setNewShowTitle(false)
+                setCreateOpen(true)
+                setNewTitle('')
+                setNewShowTitle(false)
               }}
             >
               Создать
@@ -352,69 +381,79 @@ export default function SurveysPage() {
               <h3 className="surveys-main-title">{selectedSurvey.title}</h3>
               <p className="surveys-main-hint">Вопросы и варианты ответов. Тип: один вариант (radio) или несколько (checkbox).</p>
               <div className="surveys-questions">
-                {selectedSurvey.questions.map((q) => (
-                  <div key={q.id} className="surveys-question-block">
-                    <div className="surveys-question-header">
-                      <Button
-                        appearance="subtle"
-                        icon={expandedQuestions.has(q.id) ? <ChevronUp24Regular /> : <ChevronDown24Regular />}
-                        onClick={() => toggleQuestion(q.id)}
-                        size="small"
-                      />
-                      <span className="surveys-question-text">{q.text}</span>
-                      <span className="surveys-question-type">{q.choiceType === 'single' ? 'Один вариант' : 'Несколько вариантов'}</span>
-                      <div className="surveys-question-actions">
+                {selectedSurvey.questions
+                  .sort((a, b) => a.sortOrder - b.sortOrder)
+                  .map((q) => (
+                    <div
+                      key={q.id}
+                      className="surveys-question-block"
+                      draggable
+                      onDragStart={() => setDragQuestionId(q.id)}
+                      onDragOver={handleQuestionDragOver}
+                      onDrop={() => handleQuestionDrop(q.id)}
+                      style={{ cursor: 'grab' }}
+                    >
+                      <div className="surveys-question-header">
                         <Button
                           appearance="subtle"
-                          icon={<Edit24Regular />}
+                          icon={expandedQuestions.has(q.id) ? <ChevronUp24Regular /> : <ChevronDown24Regular />}
+                          onClick={() => toggleQuestion(q.id)}
                           size="small"
-                          onClick={() => setEditQuestionOpen(q)}
-                          aria-label="Редактировать"
                         />
-                        <Button
-                          appearance="subtle"
-                          icon={<Delete24Regular />}
-                          size="small"
-                          onClick={() => handleDeleteQuestion(q)}
-                          aria-label="Удалить"
-                        />
+                        <span className="surveys-question-text">{q.text}</span>
+                        <span className="surveys-question-type">{q.choiceType === 'single' ? 'Один вариант' : 'Несколько вариантов'}</span>
+                        <div className="surveys-question-actions">
+                          <Button
+                            appearance="subtle"
+                            icon={<Edit24Regular />}
+                            size="small"
+                            onClick={() => setEditQuestionOpen(q)}
+                            aria-label="Редактировать"
+                          />
+                          <Button
+                            appearance="subtle"
+                            icon={<Delete24Regular />}
+                            size="small"
+                            onClick={() => handleDeleteQuestion(q)}
+                            aria-label="Удалить"
+                          />
+                        </div>
                       </div>
+                      {expandedQuestions.has(q.id) && (
+                        <div className="surveys-options">
+                          {q.options.map((o) => (
+                            <div key={o.id} className="surveys-option-row">
+                              <span className="surveys-option-text">{o.text}</span>
+                              <Button
+                                appearance="subtle"
+                                icon={<Edit24Regular />}
+                                size="small"
+                                onClick={() => setEditOptionOpen({ q, o })}
+                                aria-label="Редактировать"
+                              />
+                              <Button
+                                appearance="subtle"
+                                icon={<Delete24Regular />}
+                                size="small"
+                                onClick={() => handleDeleteOption(q, o)}
+                                aria-label="Удалить"
+                              />
+                            </div>
+                          ))}
+                          <Button
+                            appearance="subtle"
+                            icon={<Add24Regular />}
+                            onClick={() => {
+                              setAddOptionOpen(q)
+                              setNewOptionText('')
+                            }}
+                          >
+                            Добавить вариант
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    {expandedQuestions.has(q.id) && (
-                      <div className="surveys-options">
-                        {q.options.map((o) => (
-                          <div key={o.id} className="surveys-option-row">
-                            <span className="surveys-option-text">{o.text}</span>
-                            <Button
-                              appearance="subtle"
-                              icon={<Edit24Regular />}
-                              size="small"
-                              onClick={() => setEditOptionOpen({ q, o })}
-                              aria-label="Редактировать"
-                            />
-                            <Button
-                              appearance="subtle"
-                              icon={<Delete24Regular />}
-                              size="small"
-                              onClick={() => handleDeleteOption(q, o)}
-                              aria-label="Удалить"
-                            />
-                          </div>
-                        ))}
-                        <Button
-                          appearance="subtle"
-                          icon={<Add24Regular />}
-                          onClick={() => {
-                            setAddOptionOpen(q)
-                            setNewOptionText('')
-                          }}
-                        >
-                          Добавить вариант
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  ))}
               </div>
               <Button
                 appearance="primary"

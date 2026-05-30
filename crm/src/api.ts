@@ -104,6 +104,11 @@ export async function removeGuestFromInvitation(invitationId: number, guestId: n
   if (!res.ok) throw new Error('Failed to remove guest')
 }
 
+export async function deleteGuest(id: number): Promise<void> {
+  const res = await authFetch(`${API}/guests/${id}`, { method: 'DELETE' })
+  if (!res.ok) throw new Error('Failed to delete guest')
+}
+
 export async function updateGuest(id: number, data: {
   fullName: string
   phone?: string | null
@@ -180,6 +185,24 @@ export async function updateQuestion(surveyId: number, questionId: number, data:
 export async function deleteQuestion(surveyId: number, questionId: number): Promise<void> {
   const res = await authFetch(`${API}/surveys/${surveyId}/questions/${questionId}`, { method: 'DELETE' })
   if (!res.ok) throw new Error('Failed to delete question')
+}
+
+export async function reorderGuests(invitationId: number, orders: { guestId: number; sortOrder: number }[]): Promise<void> {
+  const res = await authFetch(`${API}/invitations/${invitationId}/guests/reorder`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orders })
+  })
+  if (!res.ok) throw new Error('Failed to reorder guests')
+}
+
+export async function reorderQuestions(surveyId: number, orders: { questionId: number; sortOrder: number }[]): Promise<void> {
+  const res = await authFetch(`${API}/surveys/${surveyId}/questions/reorder`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orders })
+  })
+  if (!res.ok) throw new Error('Failed to reorder questions')
 }
 
 export async function createOption(surveyId: number, questionId: number, text: string): Promise<SurveyQuestionOption> {

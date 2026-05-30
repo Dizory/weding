@@ -332,6 +332,19 @@ invitations.MapDelete("/{invId:int}/guests/{guestId:int}", async (int invId, int
     return Results.NoContent();
 }).RequireAuthorization();
 
+invitations.MapPut("/{invId:int}/guests/reorder", async (int invId, GuestReorderRequest req, InvitationDbContext db) =>
+{
+    var igs = await db.InvitationGuests.Where(x => x.InvitationId == invId).ToListAsync();
+    foreach (var ig in igs)
+    {
+        var order = req.Orders.FirstOrDefault(o => o.GuestId == ig.GuestId);
+        if (order is not null)
+            ig.SortOrder = order.SortOrder;
+    }
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+}).RequireAuthorization();
+
 invitations.MapPost("/{slug}/confirm", async (string slug, InvitationDbContext db) =>
 {
     var inv = await db.Invitations.FirstOrDefaultAsync(i => i.Slug == slug);
@@ -405,6 +418,14 @@ guests.MapPut("/{id:int}", async (int id, UpdateGuestRequest req, InvitationDbCo
     await db.SaveChangesAsync();
     return Results.Ok(new GuestListItemDto(guest.Id, guest.FullName, guest.Phone, guest.Gender));
 });
+guests.MapDelete("/{id:int}", async (int id, InvitationDbContext db) =>
+{
+    var guest = await db.Guests.FindAsync(id);
+    if (guest is null) return Results.NotFound();
+    db.Guests.Remove(guest);
+    await db.SaveChangesAsync();
+    return Results.NoContent();
+});
 
 var surveys = app.MapGroup("/api/surveys");
 surveys.MapGet("/", async (InvitationDbContext db) =>
@@ -466,6 +487,19 @@ surveys.MapPost("/{surveyId:int}/questions", async (int surveyId, CreateQuestion
     await db.SaveChangesAsync();
     return Results.Created($"/api/surveys/{surveyId}/questions/{q.Id}",
         new SurveyQuestionDto(q.Id, q.Text, q.ChoiceType, q.SortOrder, []));
+}).RequireAuthorization();
+
+surveys.MapPut("/{surveyId:int}/questions/reorder", async (int surveyId, QuestionReorderRequest req, InvitationDbContext db) =>
+{
+    var questions = await db.SurveyQuestions.Where(q => q.SurveyId == surveyId).ToListAsync();
+    foreach (var q in questions)
+    {
+        var order = req.Orders.FirstOrDefault(o => o.QuestionId == q.Id);
+        if (order is not null)
+            q.SortOrder = order.SortOrder;
+    }
+    await db.SaveChangesAsync();
+    return Results.NoContent();
 }).RequireAuthorization();
 
 surveys.MapPut("/{surveyId:int}/questions/{questionId:int}", async (int surveyId, int questionId, UpdateQuestionRequest req, InvitationDbContext db) =>
@@ -596,6 +630,51 @@ stats.MapGet("/", async (InvitationDbContext db) =>
     });
 });
 
+static string CsvEscape(string? value)
+{
+    if (string.IsNullOrEmpty(value)) return "";
+    if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
+        return $"\"{value.Replace("\"", "\"\"")}\"";
+    return value;
+}
+
+var exportGroup = app.MapGroup("/api/export").RequireAuthorization();
+exportGroup.MapGet("/guests", async (InvitationDbContext db) =>
+{
+    var guests = await db.Guests
+        .Include(g => g.InvitationGuests)
+        .ThenInclude(ig => ig.Invitation)
+        .OrderBy(g => g.FullName)
+        .ToListAsync();
+    var sb = new StringBuilder();
+    sb.AppendLine("ФИО,Телефон,Пол,Приглашения,Подтверждён");
+    foreach (var g in guests)
+    {
+        var invitations = string.Join("; ", g.InvitationGuests.Select(ig => ig.Invitation.Title));
+        var confirmed = g.InvitationGuests.Any(ig => ig.Invitation.ConfirmedAt.HasValue) ? "Да" : "Нет";
+        sb.AppendLine($"{CsvEscape(g.FullName)},{CsvEscape(g.Phone)},{CsvEscape(g.Gender)},{CsvEscape(invitations)},{confirmed}");
+    }
+    return Results.File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "guests.csv");
+});
+exportGroup.MapGet("/responses", async (InvitationDbContext db) =>
+{
+    var answers = await db.SurveyResponseAnswers
+        .Include(a => a.Question).ThenInclude(q => q.Survey)
+        .Include(a => a.Option)
+        .Include(a => a.Response).ThenInclude(r => r.Invitation)
+        .OrderBy(a => a.Response.Invitation.Title)
+        .ThenBy(a => a.Question.Survey.Title)
+        .ThenBy(a => a.Question.SortOrder)
+        .ToListAsync();
+    var sb = new StringBuilder();
+    sb.AppendLine("Приглашение,Опрос,Вопрос,Ответ");
+    foreach (var a in answers)
+    {
+        sb.AppendLine($"{CsvEscape(a.Response.Invitation.Title)},{CsvEscape(a.Question.Survey.Title)},{CsvEscape(a.Question.Text)},{CsvEscape(a.Option.Text)}");
+    }
+    return Results.File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "responses.csv");
+});
+
 app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -644,3 +723,7 @@ record CreateAdminRequest(string? Login, string? Password);
 record UpdateMyCredentialsRequest(string? CurrentPassword, string? NewLogin, string? NewPassword);
 record SubmitSurveyResponseRequest(int SurveyId, List<SurveyAnswerItem> Answers);
 record SurveyAnswerItem(int QuestionId, List<int> OptionIds);
+record GuestReorderItem(int GuestId, int SortOrder);
+record GuestReorderRequest(List<GuestReorderItem> Orders);
+record QuestionReorderItem(int QuestionId, int SortOrder);
+record QuestionReorderRequest(List<QuestionReorderItem> Orders);

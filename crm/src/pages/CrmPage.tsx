@@ -21,10 +21,10 @@ import {
   Option,
   Textarea
 } from '@fluentui/react-components'
-import { Dismiss24Regular, Add24Regular, PersonAdd24Regular, Edit24Regular, Link24Regular } from '@fluentui/react-icons'
-import { fetchInvitations, deleteInvitation, createInvitation, updateInvitation, addGuestToInvitation, fetchGuests } from '../api'
+import { Dismiss24Regular, Add24Regular, PersonAdd24Regular, Edit24Regular, Link24Regular, Delete24Regular, ArrowDownload24Regular } from '@fluentui/react-icons'
+import { fetchInvitations, deleteInvitation, createInvitation, updateInvitation, addGuestToInvitation, removeGuestFromInvitation, reorderGuests, fetchGuests } from '../api'
 import { formatPhoneInput } from '../utils'
-import { getInvitationLink } from '../utils'
+import { getInvitationLink, downloadCsv } from '../utils'
 import type { Invitation, InvitationGuest, GuestListItem } from '../types'
 import './CrmPage.css'
 
@@ -67,6 +67,7 @@ export default function CrmPage() {
   const [editGreetingWord, setEditGreetingWord] = useState('')
   const [editGuestNames, setEditGuestNames] = useState('')
   const [updatingInv, setUpdatingInv] = useState(false)
+  const [dragGuest, setDragGuest] = useState<{ invId: number; guestId: number } | null>(null)
 
   useEffect(() => {
     fetchInvitations()
@@ -195,6 +196,55 @@ export default function CrmPage() {
     }
   }
 
+  const handleRemoveGuest = async (invId: number, guestId: number, guestName: string) => {
+    if (!confirm(`Удалить гостя «${guestName}» из приглашения?`)) return
+    try {
+      await removeGuestFromInvitation(invId, guestId)
+      setInvitations((prev) =>
+        prev.map((i) =>
+          i.id === invId
+            ? { ...i, guests: i.guests.filter((g) => g.id !== guestId) }
+            : i
+        )
+      )
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка удаления гостя')
+    }
+  }
+
+  const handleGuestDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleGuestDrop = async (invId: number, targetGuestId: number) => {
+    if (!dragGuest || dragGuest.invId !== invId || dragGuest.guestId === targetGuestId) {
+      setDragGuest(null)
+      return
+    }
+    const inv = invitations.find((i) => i.id === invId)
+    if (!inv) { setDragGuest(null); return }
+    const sorted = [...inv.guests].sort((a, b) => a.sortOrder - b.sortOrder)
+    const fromIdx = sorted.findIndex((g) => g.id === dragGuest.guestId)
+    const toIdx = sorted.findIndex((g) => g.id === targetGuestId)
+    if (fromIdx === -1 || toIdx === -1) { setDragGuest(null); return }
+    const reordered = [...sorted]
+    const [moved] = reordered.splice(fromIdx, 1)
+    reordered.splice(toIdx, 0, moved)
+    const orders = reordered.map((g, idx) => ({ guestId: g.id, sortOrder: idx }))
+    try {
+      await reorderGuests(invId, orders)
+      setInvitations((prev) =>
+        prev.map((i) =>
+          i.id === invId ? { ...i, guests: reordered } : i
+        )
+      )
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка сортировки')
+    }
+    setDragGuest(null)
+  }
+
   if (loading) {
     return (
       <div className="crm-page">
@@ -209,38 +259,53 @@ export default function CrmPage() {
     <div className="crm-page">
       <header className="crm-header">
         <h1>Приглашения</h1>
-        <Button icon={<Add24Regular />} appearance="primary" onClick={() => setCreateOpen(true)}>
-          Создать приглашение
-        </Button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button
+            appearance="subtle"
+            icon={<ArrowDownload24Regular />}
+            onClick={async () => {
+              try {
+                await downloadCsv('/api/export/responses', 'responses.csv')
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Ошибка экспорта')
+              }
+            }}
+          >
+            Экспорт ответов
+          </Button>
+          <Button icon={<Add24Regular />} appearance="primary" onClick={() => setCreateOpen(true)}>
+            Создать приглашение
+          </Button>
+        </div>
       </header>
 
       <Dialog open={createOpen} onOpenChange={(_, data) => setCreateOpen(data.open)}>
         <DialogSurface>
-            <DialogBody>
-              <DialogTitle>Новое приглашение</DialogTitle>
-              <DialogContent>
-                <Label htmlFor="title">Заголовок</Label>
-                <Input
-                  id="title"
-                  value={newTitle}
-                  onChange={(_, d) => setNewTitle(d.value)}
-                  placeholder="Свадебное приглашение"
-                />
-              </DialogContent>
-              <DialogActions>
-                <Button appearance="secondary" icon={<Dismiss24Regular />} onClick={() => setCreateOpen(false)}>
-                  Отмена
-                </Button>
-                <Button
-                  appearance="primary"
-                  onClick={handleCreate}
-                  disabled={!newTitle.trim() || creating}
-                >
-                  {creating ? 'Создание...' : 'Создать'}
-                </Button>
-              </DialogActions>
-            </DialogBody>
-          </DialogSurface>
+          <DialogBody>
+            <DialogTitle>Новое приглашение</DialogTitle>
+            <DialogContent>
+              <Label htmlFor="title">Заголовок</Label>
+              <Input
+                id="title"
+                value={newTitle}
+                onChange={(_, d) => setNewTitle(d.value)}
+                placeholder="Свадебное приглашение"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button appearance="secondary" icon={<Dismiss24Regular />} onClick={() => setCreateOpen(false)}>
+                Отмена
+              </Button>
+              <Button
+                appearance="primary"
+                onClick={handleCreate}
+                disabled={!newTitle.trim() || creating}
+              >
+                {creating ? 'Создание...' : 'Создать'}
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
       </Dialog>
 
       <Dialog open={editInvOpen !== null} onOpenChange={(_, data) => !data.open && setEditInvOpen(null)}>
@@ -359,126 +424,149 @@ export default function CrmPage() {
       )}
 
       <div className="crm-tree-container">
-          {invitations.length === 0 ? (
-            <p className="crm-empty">Нет приглашений.</p>
-          ) : (
-            <Tree aria-label="Список приглашений" appearance="subtle" size="medium">
-              {invitations.map((inv) => (
-                <TreeItem
-                  key={inv.id}
-                  itemType={inv.guests.length > 0 ? 'branch' : 'leaf'}
-                  value={`inv-${inv.id}`}
+        {invitations.length === 0 ? (
+          <p className="crm-empty">Нет приглашений.</p>
+        ) : (
+          <Tree aria-label="Список приглашений" appearance="subtle" size="medium">
+            {invitations.map((inv) => (
+              <TreeItem
+                key={inv.id}
+                itemType={inv.guests.length > 0 ? 'branch' : 'leaf'}
+                value={`inv-${inv.id}`}
+                className={inv.confirmedAt ? 'crm-inv--confirmed' : 'crm-inv--unconfirmed'}
+              >
+                <TreeItemLayout
                   className={inv.confirmedAt ? 'crm-inv--confirmed' : 'crm-inv--unconfirmed'}
+                  aside={
+                    <span className="crm-inv-actions">
+                      <Button
+                        appearance="subtle"
+                        size="small"
+                        icon={<Link24Regular />}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleCopyLink(inv)
+                        }}
+                        aria-label="Копировать ссылку"
+                        title={getInvitationLink(inv.slug)}
+                      >
+                        Ссылка
+                      </Button>
+                      <Button
+                        appearance="subtle"
+                        size="small"
+                        icon={<Edit24Regular />}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setEditInvOpen(inv)
+                        }}
+                        aria-label="Редактировать"
+                      >
+                        Изменить
+                      </Button>
+                      <Button
+                        appearance="subtle"
+                        size="small"
+                        icon={<PersonAdd24Regular />}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setAddGuestOpen(inv.id)
+                        }}
+                        aria-label="Добавить гостя"
+                      >
+                        Гость
+                      </Button>
+                      <Button
+                        appearance="subtle"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(inv.id, inv.title)
+                        }}
+                        aria-label={`Удалить ${inv.title}`}
+                      >
+                        Удалить
+                      </Button>
+                    </span>
+                  }
                 >
-                  <TreeItemLayout
-                    className={inv.confirmedAt ? 'crm-inv--confirmed' : 'crm-inv--unconfirmed'}
-                    aside={
-                      <span className="crm-inv-actions">
-                        <Button
-                          appearance="subtle"
-                          size="small"
-                          icon={<Link24Regular />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleCopyLink(inv)
-                          }}
-                          aria-label="Копировать ссылку"
-                          title={getInvitationLink(inv.slug)}
+                  <div className="crm-inv-title-row">
+                    <span>{inv.title}</span>
+                    {inv.guests.length > 0 && (
+                      <span className="crm-guest-count"> ({inv.guests.length})</span>
+                    )}
+                  </div>
+                  <div className="crm-inv-link-row">
+                    <span className="crm-inv-link" title="Нажмите, чтобы скопировать" onClick={(e) => { e.stopPropagation(); handleCopyLink(inv) }}>
+                      {getInvitationLink(inv.slug)}
+                    </span>
+                  </div>
+                </TreeItemLayout>
+                {inv.guests.length > 0 && (
+                  <Tree>
+                    {inv.guests
+                      .sort((a, b) => a.sortOrder - b.sortOrder)
+                      .map((g) => (
+                        <TreeItem
+                          key={g.id}
+                          itemType="leaf"
+                          value={`guest-${g.id}`}
+                          className={inv.confirmedAt ? 'crm-guest--confirmed' : 'crm-guest--unconfirmed'}
+                          draggable
+                          onDragStart={() => setDragGuest({ invId: inv.id, guestId: g.id })}
+                          onDragOver={handleGuestDragOver}
+                          onDrop={() => handleGuestDrop(inv.id, g.id)}
+                          style={{ cursor: 'grab' }}
                         >
-                          Ссылка
-                        </Button>
-                        <Button
-                          appearance="subtle"
-                          size="small"
-                          icon={<Edit24Regular />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setEditInvOpen(inv)
-                          }}
-                          aria-label="Редактировать"
-                        >
-                          Изменить
-                        </Button>
-                        <Button
-                          appearance="subtle"
-                          size="small"
-                          icon={<PersonAdd24Regular />}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setAddGuestOpen(inv.id)
-                          }}
-                          aria-label="Добавить гостя"
-                        >
-                          Гость
-                        </Button>
-                        <Button
-                          appearance="subtle"
-                          size="small"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDelete(inv.id, inv.title)
-                          }}
-                          aria-label={`Удалить ${inv.title}`}
-                        >
-                          Удалить
-                        </Button>
-                      </span>
-                    }
-                  >
-                    <div className="crm-inv-title-row">
-                      <span>{inv.title}</span>
-                      {inv.guests.length > 0 && (
-                        <span className="crm-guest-count"> ({inv.guests.length})</span>
-                      )}
-                    </div>
-                    <div className="crm-inv-link-row">
-                      <span className="crm-inv-link" title="Нажмите, чтобы скопировать" onClick={(e) => { e.stopPropagation(); handleCopyLink(inv) }}>
-                        {getInvitationLink(inv.slug)}
-                      </span>
-                    </div>
-                  </TreeItemLayout>
-                  {inv.guests.length > 0 && (
-                    <Tree>
-                      {inv.guests
-                        .sort((a, b) => a.sortOrder - b.sortOrder)
-                        .map((g) => (
-                          <TreeItem key={g.id} itemType="leaf" value={`guest-${g.id}`} className={inv.confirmedAt ? 'crm-guest--confirmed' : 'crm-guest--unconfirmed'}>
-                            <TreeItemLayout className={inv.confirmedAt ? 'crm-guest--confirmed' : 'crm-guest--unconfirmed'}>
-                              {g.name}
-                              {g.phone && <span className="crm-guest-phone"> · {g.phone}</span>}
+                          <TreeItemLayout className={inv.confirmedAt ? 'crm-guest--confirmed' : 'crm-guest--unconfirmed'}
+                            aside={
+                              <Button
+                                appearance="subtle"
+                                size="small"
+                                icon={<Delete24Regular />}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleRemoveGuest(inv.id, g.id, g.name)
+                                }}
+                                aria-label={`Удалить ${g.name}`}
+                              />
+                            }
+                          >
+                            {g.name}
+                            {g.phone && <span className="crm-guest-phone"> · {g.phone}</span>}
+                          </TreeItemLayout>
+                        </TreeItem>
+                      ))}
+                  </Tree>
+                )}
+                {(inv.surveyResponses?.length ?? 0) > 0 && (
+                  <Tree>
+                    <TreeItem itemType="branch" value={`inv-${inv.id}-responses`}>
+                      <TreeItemLayout>Ответы на опросы</TreeItemLayout>
+                      <Tree>
+                        {(inv.surveyResponses ?? []).map((sr) => (
+                          <TreeItem key={`${inv.id}-${sr.surveyId}-${sr.createdAt}`} itemType="leaf" value={`resp-${sr.surveyId}`}>
+                            <TreeItemLayout>
+                              <div className="crm-survey-responses">
+                                <div className="crm-survey-response-title">{sr.surveyTitle}</div>
+                                {sr.items.map((item, idx) => (
+                                  <div key={idx} className="crm-survey-response-item">
+                                    <span className="crm-survey-question">{item.questionText}:</span>{' '}
+                                    <span className="crm-survey-answer">{item.selectedOptions.join(', ')}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </TreeItemLayout>
                           </TreeItem>
                         ))}
-                    </Tree>
-                  )}
-                  {(inv.surveyResponses?.length ?? 0) > 0 && (
-                    <Tree>
-                      <TreeItem itemType="branch" value={`inv-${inv.id}-responses`}>
-                        <TreeItemLayout>Ответы на опросы</TreeItemLayout>
-                        <Tree>
-                          {(inv.surveyResponses ?? []).map((sr) => (
-                            <TreeItem key={`${inv.id}-${sr.surveyId}-${sr.createdAt}`} itemType="leaf" value={`resp-${sr.surveyId}`}>
-                              <TreeItemLayout>
-                                <div className="crm-survey-responses">
-                                  <div className="crm-survey-response-title">{sr.surveyTitle}</div>
-                                  {sr.items.map((item, idx) => (
-                                    <div key={idx} className="crm-survey-response-item">
-                                      <span className="crm-survey-question">{item.questionText}:</span>{' '}
-                                      <span className="crm-survey-answer">{item.selectedOptions.join(', ')}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </TreeItemLayout>
-                            </TreeItem>
-                          ))}
-                        </Tree>
-                      </TreeItem>
-                    </Tree>
-                  )}
-                </TreeItem>
-              ))}
-            </Tree>
-          )}
+                      </Tree>
+                    </TreeItem>
+                  </Tree>
+                )}
+              </TreeItem>
+            ))}
+          </Tree>
+        )}
       </div>
     </div>
   )

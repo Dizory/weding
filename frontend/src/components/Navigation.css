@@ -77,3 +77,22 @@
 .nav__link:focus-visible {
   outline: none;
 }
+
+@media (max-width: 480px) {
+  .nav__toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    border-radius: 6px;
+  }
+
+  .nav__menu {
+    min-width: 150px;
+    margin-top: 6px;
+  }
+
+  .nav__link {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+}

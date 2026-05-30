@@ -44,3 +44,20 @@ export function formatPhoneInput(value: string): string {
   if (d) s += '-' + d
   return s
 }
+
+export async function downloadCsv(url: string, filename: string): Promise<void> {
+  const token = (await import('./auth')).getToken()
+  const res = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  })
+  if (!res.ok) throw new Error('Failed to download')
+  const blob = await res.blob()
+  const downloadUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = downloadUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(downloadUrl)
+}

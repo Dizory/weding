@@ -35,3 +35,37 @@
   font-size: 1.5rem;
   font-weight: 600;
 }
+
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .app-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.5rem;
+    border-right: none;
+    border-bottom: 1px solid var(--colorNeutralStroke2);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .app-sidebar__nav {
+    flex: 0 1 auto;
+    overflow-x: auto;
+  }
+
+  .app-sidebar .fui-Button {
+    margin-top: 0;
+  }
+
+  .app-main {
+    overflow: visible;
+  }
+
+  .page-content {
+    padding: 1rem;
+  }
+}

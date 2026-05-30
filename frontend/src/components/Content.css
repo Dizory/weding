@@ -511,3 +511,288 @@
   cursor: not-allowed;
   opacity: 0.7;
 }
+
+/* ===== Адаптивность: планшет (≤768px) ===== */
+@media (max-width: 768px) {
+  .header__img {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .main_text {
+    position: static;
+    transform: none;
+    margin: -4rem auto 1rem;
+    font-size: clamp(1.5rem, 10vw, 4rem);
+  }
+
+  .headertext--shift {
+    margin-left: 3rem;
+  }
+
+  .date_block {
+    position: static;
+    transform: none;
+    margin: 1rem auto 2rem;
+  }
+
+  .date {
+    gap: 0 0.3rem;
+  }
+
+  .date__cell {
+    padding: 8px 2px;
+  }
+
+  .date__cell.daily {
+    font-size: clamp(2rem, 12vw, 5rem);
+  }
+
+  .timer {
+    gap: 5vw;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    transform: none;
+  }
+
+  .timer__value {
+    font-size: clamp(1.5rem, 12vw, 5rem);
+  }
+
+  .timer__label {
+    font-size: clamp(0.7rem, 3.5vw, 1.2rem);
+  }
+
+  .top__img-wrap {
+    width: 85%;
+    transform: translate(10%, -40%) rotate(180deg) translateZ(0);
+  }
+
+  .down__img-wrap {
+    width: 85%;
+    transform: translate(10%, -50%) scaleX(-1) translateZ(0);
+    margin-bottom: -20%;
+  }
+
+  .personal_invite {
+    transform: translate(0, -30%);
+    margin-bottom: -5%;
+  }
+
+  .vetka2 {
+    width: 40%;
+    transform: translate(140%, 80%) translateZ(0);
+    margin-top: -60%;
+  }
+
+  .text_invite {
+    left: 0;
+    gap: 1.5rem;
+  }
+
+  .foto {
+    width: 65%;
+  }
+
+  .vetka3 {
+    width: 65%;
+    left: 0;
+  }
+
+  .confirm_button {
+    margin-top: 2vh;
+  }
+
+  .callback {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-top: 3rem;
+  }
+
+  .text_callback {
+    font-size: clamp(0.9rem, 4.5vw, 1.5rem);
+  }
+
+  .qr {
+    width: 50%;
+    margin: 0 auto;
+  }
+
+  .questionnaire {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border-radius: 2vh;
+  }
+
+  .header_qw_text {
+    font-size: clamp(0.9rem, 4.5vw, 1.3rem);
+  }
+
+  .questionnaire__question-text {
+    font-size: clamp(0.85rem, 4vw, 1.5rem);
+  }
+
+  .questionnaire__option {
+    font-size: clamp(0.8rem, 3.5vw, 1.2rem);
+    padding: 0.15rem 0;
+  }
+
+  .questionnaire__submit {
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    padding: 0.5rem 1rem;
+  }
+
+  .timetable {
+    max-width: 100%;
+  }
+
+  .timetable__time {
+    font-size: 1em;
+  }
+
+  .maps {
+    max-width: 100%;
+  }
+
+  .copirate {
+    font-size: 0.75rem;
+  }
+}
+
+/* ===== Адаптивность: телефон (≤480px) ===== */
+@media (max-width: 480px) {
+  .header__img {
+    width: 100%;
+  }
+
+  .main_text {
+    margin-top: -2rem;
+    font-size: clamp(1.2rem, 8vw, 2.5rem);
+  }
+
+  .headertext--shift {
+    margin-left: 2rem;
+  }
+
+  .date {
+    grid-template-columns: 1fr 0.6fr 1fr;
+    gap: 0 0.2rem;
+  }
+
+  .date__cell {
+    padding: 4px 1px;
+    font-size: clamp(0.8rem, 7vw, 2.5rem);
+  }
+
+  .date__cell.daily {
+    font-size: clamp(1.5rem, 14vw, 3.5rem);
+  }
+
+  .timer {
+    gap: 4vw;
+  }
+
+  .timer__value {
+    font-size: clamp(1.2rem, 14vw, 3.5rem);
+  }
+
+  .timer__label {
+    font-size: clamp(0.6rem, 3vw, 0.9rem);
+  }
+
+  .top__img-wrap {
+    width: 100%;
+    transform: translate(0, -30%) rotate(180deg) translateZ(0);
+  }
+
+  .down__img-wrap {
+    width: 100%;
+    transform: translate(0, -40%) scaleX(-1) translateZ(0);
+    margin-bottom: -15%;
+  }
+
+  .personal_invite {
+    transform: translate(0, -15%);
+    font-size: clamp(1.2rem, 10vw, 3rem);
+    margin-bottom: 0;
+  }
+
+  .vetka2 {
+    width: 50%;
+    transform: translate(90%, 50%) translateZ(0);
+    margin-top: -50%;
+  }
+
+  .text_invite {
+    gap: 1rem;
+    font-size: clamp(0.85rem, 5vw, 1.3rem);
+  }
+
+  .foto {
+    width: 85%;
+  }
+
+  .final_text {
+    font-size: clamp(0.85rem, 5.5vw, 1.5rem);
+  }
+
+  .final_text .tab {
+    font-size: clamp(1.2rem, 10vw, 3rem);
+  }
+
+  .vetka3 {
+    width: 80%;
+  }
+
+  .confirm_button {
+    width: clamp(10rem, 85vw, 25rem);
+    height: clamp(2.5rem, 14vw, 3.5rem);
+    font-size: clamp(0.9rem, 5vw, 1.3rem);
+    border-radius: 20px;
+    margin-top: 1.5rem;
+  }
+
+  .callback {
+    margin-top: 2rem;
+  }
+
+  .qr {
+    width: 70%;
+  }
+
+  .questionnaire {
+    padding: 0.75rem;
+    gap: 1rem;
+    border-radius: 1.5vh;
+  }
+
+  .questionnaire__survey {
+    gap: 0.75rem;
+  }
+
+  .questionnaire__option input[type='radio'],
+  .questionnaire__option input[type='checkbox'] {
+    width: 1.5em;
+    height: 1.5em;
+  }
+
+  .palira {
+    gap: clamp(0.3rem, 3vw, 1.5rem);
+    margin-top: clamp(0.5rem, 4vw, 2rem);
+  }
+
+  .palira__circle {
+    width: clamp(1rem, 12vw, 3rem);
+    height: clamp(1rem, 12vw, 3rem);
+  }
+
+  .timetable__time {
+    font-size: 0.85em;
+    padding: 0.3em 0.2em 0.3em 0.2em;
+  }
+
+  .maps {
+    margin-top: 1rem;
+  }
+}

@@ -43,3 +43,28 @@
 .guests-row--unconfirmed {
   background: #f8d7da;
 }
+
+@media (max-width: 768px) {
+  .guests-page {
+    padding: 0.5rem;
+  }
+
+  .guests-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .guests-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .guests-list {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .guests-list table {
+    min-width: 500px;
+  }
+}

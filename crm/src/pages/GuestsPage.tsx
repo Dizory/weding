@@ -22,10 +22,10 @@ import {
   TableHeader,
   TableHeaderCell
 } from '@fluentui/react-components'
-import { Add24Regular, Dismiss24Regular, Edit24Regular } from '@fluentui/react-icons'
-import { fetchGuests, createGuest, updateGuest, fetchInvitations } from '../api'
+import { Add24Regular, Dismiss24Regular, Edit24Regular, Delete24Regular, ArrowDownload24Regular } from '@fluentui/react-icons'
+import { fetchGuests, createGuest, updateGuest, deleteGuest, fetchInvitations } from '../api'
 import type { GuestListItem } from '../types'
-import { formatPhoneInput } from '../utils'
+import { formatPhoneInput, downloadCsv } from '../utils'
 import './GuestsPage.css'
 
 export default function GuestsPage() {
@@ -111,6 +111,16 @@ export default function GuestsPage() {
     }
   }
 
+  const handleDeleteGuest = async (guest: GuestListItem) => {
+    if (!confirm(`Удалить гостя «${guest.fullName}»? Гость также будет удалён из всех приглашений.`)) return
+    try {
+      await deleteGuest(guest.id)
+      setGuests((prev) => prev.filter((g) => g.id !== guest.id))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Ошибка удаления')
+    }
+  }
+
   if (loading) {
     return (
       <div className="guests-page">
@@ -125,54 +135,70 @@ export default function GuestsPage() {
     <div className="guests-page">
       <header className="guests-header">
         <h1>Гости</h1>
-        <Dialog open={createOpen} onOpenChange={(_, data) => setCreateOpen(data.open)}>
-          <DialogTrigger disableButtonEnhancement>
-            <Button icon={<Add24Regular />} appearance="primary">
-              Добавить гостя
-            </Button>
-          </DialogTrigger>
-          <DialogSurface>
-            <DialogBody>
-              <DialogTitle>Новый гость</DialogTitle>
-              <DialogContent className="guests-form">
-                <Label htmlFor="fullName">ФИО</Label>
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(_, d) => setFullName(d.value)}
-                  placeholder="Иванов Иван Иванович"
-                  required
-                />
-                <Label htmlFor="phone">Телефон</Label>
-                <Input
-                  id="phone"
-                  value={phone}
-                  onChange={(_, d) => setPhone(formatPhoneInput(d.value))}
-                  placeholder="+7 900 123-45-67"
-                />
-                <Label>Пол</Label>
-                <RadioGroup value={gender} onChange={(_, d) => setGender(d.value)} layout="horizontal">
-                  <Radio value="male" label="М" />
-                  <Radio value="female" label="Ж" />
-                </RadioGroup>
-              </DialogContent>
-              <DialogActions>
-                <DialogTrigger disableButtonEnhancement>
-                  <Button appearance="secondary" icon={<Dismiss24Regular />}>
-                    Отмена
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button
+            appearance="subtle"
+            icon={<ArrowDownload24Regular />}
+            onClick={async () => {
+              try {
+                await downloadCsv('/api/export/guests', 'guests.csv')
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Ошибка экспорта')
+              }
+            }}
+          >
+            Экспорт
+          </Button>
+          <Dialog open={createOpen} onOpenChange={(_, data) => setCreateOpen(data.open)}>
+            <DialogTrigger disableButtonEnhancement>
+              <Button icon={<Add24Regular />} appearance="primary">
+                Добавить гостя
+              </Button>
+            </DialogTrigger>
+            <DialogSurface>
+              <DialogBody>
+                <DialogTitle>Новый гость</DialogTitle>
+                <DialogContent className="guests-form">
+                  <Label htmlFor="fullName">ФИО</Label>
+                  <Input
+                    id="fullName"
+                    value={fullName}
+                    onChange={(_, d) => setFullName(d.value)}
+                    placeholder="Иванов Иван Иванович"
+                    required
+                  />
+                  <Label htmlFor="phone">Телефон</Label>
+                  <Input
+                    id="phone"
+                    value={phone}
+                    onChange={(_, d) => setPhone(formatPhoneInput(d.value))}
+                    placeholder="+7 900 123-45-67"
+                  />
+                  <Label>Пол</Label>
+                  <RadioGroup value={gender} onChange={(_, d) => setGender(d.value)} layout="horizontal">
+                    <Radio value="male" label="М" />
+                    <Radio value="female" label="Ж" />
+                  </RadioGroup>
+                </DialogContent>
+                <DialogActions>
+                  <DialogTrigger disableButtonEnhancement>
+                    <Button appearance="secondary" icon={<Dismiss24Regular />}>
+                      Отмена
+                    </Button>
+                  </DialogTrigger>
+                  <Button
+                    appearance="primary"
+                    onClick={handleCreate}
+                    disabled={!fullName.trim() || creating}
+                  >
+                    {creating ? 'Создание...' : 'Добавить'}
                   </Button>
-                </DialogTrigger>
-                <Button
-                  appearance="primary"
-                  onClick={handleCreate}
-                  disabled={!fullName.trim() || creating}
-                >
-                  {creating ? 'Создание...' : 'Добавить'}
-                </Button>
-              </DialogActions>
-            </DialogBody>
-          </DialogSurface>
-        </Dialog>
+                </DialogActions>
+              </DialogBody>
+            </DialogSurface>
+          </Dialog>
+
+        </div>
 
         <Dialog open={editGuestOpen !== null} onOpenChange={(_, data) => !data.open && setEditGuestOpen(null)}>
           <DialogSurface>
@@ -237,6 +263,13 @@ export default function GuestsPage() {
                         icon={<Edit24Regular />}
                         onClick={() => setEditGuestOpen(g)}
                         aria-label="Редактировать"
+                      />
+                      <Button
+                        appearance="subtle"
+                        size="small"
+                        icon={<Delete24Regular />}
+                        onClick={() => handleDeleteGuest(g)}
+                        aria-label="Удалить"
                       />
                     </TableCell>
                   </TableRow>

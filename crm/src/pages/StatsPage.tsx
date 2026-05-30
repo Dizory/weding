@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Spinner, Card, CardHeader, CardPreview, MessageBar, MessageBarBody } from '@fluentui/react-components'
-import { DataPie24Regular, People24Regular, Mail24Regular, DocumentBulletList24Regular } from '@fluentui/react-icons'
+import { Spinner, Card, CardHeader, CardPreview, MessageBar, MessageBarBody, Button } from '@fluentui/react-components'
+import { DataPie24Regular, People24Regular, Mail24Regular, DocumentBulletList24Regular, ArrowDownload24Regular } from '@fluentui/react-icons'
 import { fetchStats, type Stats } from '../api'
+import { downloadCsv } from '../utils'
 import './StatsPage.css'
 
 export default function StatsPage() {
@@ -36,7 +37,35 @@ export default function StatsPage() {
 
   return (
     <div className="stats-page">
-      <h1 className="stats-title">Статистика</h1>
+      <div className="stats-header">
+        <h1 className="stats-title">Статистика</h1>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <Button
+            appearance="subtle"
+            size="small"
+            icon={<ArrowDownload24Regular />}
+            onClick={async () => {
+              try {
+                await downloadCsv('/api/export/guests', 'guests.csv')
+              } catch { /* игнорируем */ }
+            }}
+          >
+            Гости CSV
+          </Button>
+          <Button
+            appearance="subtle"
+            size="small"
+            icon={<ArrowDownload24Regular />}
+            onClick={async () => {
+              try {
+                await downloadCsv('/api/export/responses', 'responses.csv')
+              } catch { /* игнорируем */ }
+            }}
+          >
+            Ответы CSV
+          </Button>
+        </div>
+      </div>
       <div className="stats-cards">
         <Card className="stats-card">
           <CardHeader
