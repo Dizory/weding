@@ -74,9 +74,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger Coolify redeploy
+      - name: Trigger Dokploy redeploy
         if: success() && github.ref == 'refs/heads/main'
         run: |
-          if [ -n "${{ secrets.COOLIFY_WEBHOOK_URL }}" ]; then
-            curl -sf -X POST "${{ secrets.COOLIFY_WEBHOOK_URL }}" || true
+          if [ -n "${{ secrets.DOKPLOY_WEBHOOK_URL }}" ]; then
+            curl -sf -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" || true
           fi
