@@ -1,12 +1,8 @@
 .wedding-map {
-  width: 100%;
-  height: 320px;
-  border: none;
   display: block;
-}
-
-@media (max-width: 480px) {
-  .wedding-map {
-    height: 240px;
-  }
+  width: 100%;
+  min-height: 300px;
+  height: min(400px, 60vh);
+  border: none;
+  border-radius: 0.5rem;
 }
