@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-    fetchSurveys,
-    fetchSurvey,
-    createSurvey,
-    updateSurvey,
-    deleteSurvey,
-    createQuestion,
-    updateQuestion,
-    deleteQuestion,
-    reorderQuestions,
-    createOption,
-    updateOption,
-    deleteOption
+  fetchSurveys,
+  fetchSurvey,
+  createSurvey,
+  updateSurvey,
+  deleteSurvey,
+  createQuestion,
+  updateQuestion,
+  deleteQuestion,
+  reorderQuestions,
+  createOption,
+  updateOption,
+  deleteOption
 } from '../api'
-  import type { Survey, SurveyQuestion, SurveyQuestionOption } from '../types'
+import type { Survey, SurveyQuestion, SurveyQuestionOption } from '../types'
 import './SurveysPage.css'
 
 const SvgIcon = ({ d, size = 20 }: { d: string; size?: number }) => (

@@ -118,3 +118,21 @@
 }
 
 @media (max-width: 768px) {
+  .admins-page {
+    padding: 0.5rem;
+  }
+
+  .admins-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admins-header__title {
+    font-size: 1.1rem;
+  }
+
+  .admins-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
