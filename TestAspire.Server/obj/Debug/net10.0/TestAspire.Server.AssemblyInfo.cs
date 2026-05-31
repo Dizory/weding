@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TestAspire.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d6c342b921989bb84495d67c5d389e3fd3cbee7c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6f91a9a42f263e4e54747b583c38d92dc391632a")]
 [assembly: System.Reflection.AssemblyProductAttribute("TestAspire.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TestAspire.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

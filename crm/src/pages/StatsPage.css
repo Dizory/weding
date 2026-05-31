@@ -277,7 +277,7 @@
 }
 
 @media (max-width: 768px) {
-  .stats-grid {
+  .stats-cards {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
@@ -302,15 +302,15 @@
     padding: 0.85rem;
   }
 
-  .stats-card__value {
+  .stats-card-value {
     font-size: 1.5rem;
   }
 
-  .stats-card__label {
+  .stats-card-sub {
     font-size: 0.75rem;
   }
 
-  .stats-survey-header {
+  .stats-survey-title {
     font-size: 0.95rem;
   }
 }

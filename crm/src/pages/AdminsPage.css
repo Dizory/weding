@@ -122,17 +122,19 @@
     padding: 0.5rem;
   }
 
-  .admins-header {
+  .admins-page__header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.5rem;
   }
 
-  .admins-header__title {
+  .admins-page__header h1 {
     font-size: 1.1rem;
   }
 
-  .admins-grid {
-    grid-template-columns: 1fr;
+  .admin-card {
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.5rem;
   }
 }

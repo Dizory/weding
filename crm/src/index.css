@@ -51,7 +51,7 @@
 
 html {
   font-family: var(--font);
-  font-size: 15px;
+  font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -366,5 +366,5 @@ a:hover { text-decoration: underline; }
   :root {
     --sidebar-width: 0px;
   }
-  html { font-size: 14px; }
+  html { font-size: 15px; }
 }
