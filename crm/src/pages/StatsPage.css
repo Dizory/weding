@@ -276,12 +276,41 @@
   transition: width 0.4s ease;
 }
 
-@media (max-width: 640px) {
-  .stats-cards {
+@media (max-width: 768px) {
+  .stats-grid {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
+
+  .stats-page {
+    padding: 0.5rem;
+  }
+
   .stats-header {
     flex-direction: column;
+    gap: 0.5rem;
     align-items: flex-start;
+  }
+
+  .stats-title {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-card {
+    padding: 0.85rem;
+  }
+
+  .stats-card__value {
+    font-size: 1.5rem;
+  }
+
+  .stats-card__label {
+    font-size: 0.75rem;
+  }
+
+  .stats-survey-header {
+    font-size: 0.95rem;
   }
 }

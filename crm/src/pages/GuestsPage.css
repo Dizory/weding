@@ -523,3 +523,42 @@
     max-height: 95vh;
   }
 }
+
+@media (max-width: 480px) {
+  .guests-page {
+    padding: 0.25rem;
+  }
+
+  .guests-header__title {
+    font-size: 1rem;
+  }
+
+  .guests-table th,
+  .guests-table td {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .guests-table__name {
+    font-size: 0.8rem;
+  }
+
+  .guests-btn {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .guests-modal {
+    max-width: 100%;
+    margin: 0.25rem;
+  }
+
+  .guests-modal__header {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .guests-modal__body {
+    padding: 0.75rem;
+    gap: 0.65rem;
+  }
+}
