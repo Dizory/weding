@@ -1,94 +1,111 @@
-/* ===== CSS Variables ===== */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
+
 :root {
-  /* Ширина */
-  --page-max-width: 1000px;
-  --page-padding: clamp(1rem, 5vw, 2rem);
+  --color-bg: #FAF8F5;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F5F0EA;
+  --color-text: #1A1A1A;
+  --color-text-secondary: #6B625A;
+  --color-text-muted: #9E958B;
+  --color-accent: #8B5E3C;
+  --color-accent-light: #D4A574;
+  --color-accent-subtle: #F5EDE4;
+  --color-border: #E8E2D9;
+  --color-border-light: #F0EBE5;
+  --color-success: #5B8C5A;
+  --color-success-bg: #EDF5EC;
 
-  /* Цвета */
-  --color-bg: #fff;
-  --color-text: #1a1a1a;
-  --color-text-muted: #666;
-  --color-border: #e0e0e0;
-  --color-accent: #8b7355;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
 
-  /* Типографика */
-  --font-sans: 'Great Vibes', cursive, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-size-base: clamp(3rem, 1.5vw + 0.8rem, 1.125rem);
-  --font-size-h1: clamp(1.75rem, 4vw + 1rem, 2.5rem);
-  --font-size-h2: clamp(1.5rem, 3vw + 0.8rem, 2rem);
-  --font-size-h3: clamp(1.25rem, 2vw + 0.6rem, 1.5rem);
+  --max-width: 720px;
+  --section-gap: 5rem;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
 
-  /* Отступы */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.04);
+  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.06);
+  --shadow-lg: 0 8px 30px rgba(26, 26, 26, 0.08);
+
+  --transition: 200ms ease;
+  --transition-slow: 400ms ease;
 }
 
-/* ===== Reset & Base ===== */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 html {
-  font-size: 100%;
-  -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  height: auto;
-}
-
-#root {
-  min-height: 100vh;
-  height: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: var(--font-sans);
-  font-size: var(--font-size-base);
-  line-height: 1.6;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.7;
   color: var(--color-text);
-  background: var(--color-bg);
+  background-color: var(--color-bg);
+  min-height: 100vh;
 }
 
-/* ===== Page Container (max 1000px) ===== */
-.page,
-.header {
-  width: 100%;
-  max-width: var(--page-max-width);
-  /* background-color: #ffffff; */
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--page-padding);
-  padding-right: var(--page-padding);
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
-.header {
-  overflow-x: hidden;
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color var(--transition);
 }
 
-/* Navigation: фиксированная, центрирована, max-width */
-.nav {
-  width: 100%;
-  max-width: var(--page-max-width);
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: var(--page-padding);
-  padding-right: var(--page-padding);
+a:hover {
+  color: var(--color-accent-light);
 }
 
-.nav__inner {
-  padding-left: 0;
-  padding-right: 0;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --section-gap: 3rem;
+  }
+
+  body {
+    font-size: 15px;
+  }
+}
