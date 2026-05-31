@@ -1,29 +1,4 @@
-import { useState, useEffect } from 'react'
-import {
-  Button,
-  Spinner,
-  MessageBar,
-  MessageBarBody,
-  Dialog,
-  DialogSurface,
-  DialogTitle,
-  DialogBody,
-  DialogActions,
-  DialogContent,
-  Input,
-  Label,
-  Radio,
-  RadioGroup,
-  Checkbox
-} from '@fluentui/react-components'
-import {
-  Add24Regular,
-  Dismiss24Regular,
-  Edit24Regular,
-  Delete24Regular,
-  ChevronDown24Regular,
-  ChevronUp24Regular
-} from '@fluentui/react-icons'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   fetchSurveys,
   fetchSurvey,
@@ -40,6 +15,22 @@ import {
 } from '../api'
 import type { Survey, SurveyQuestion, SurveyQuestionOption } from '../types'
 import './SurveysPage.css'
+
+const SvgIcon = ({ d, size = 20 }: { d: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+)
+
+const ICONS = {
+  add: 'M12 5v14M5 12h14',
+  close: 'M18 6L6 18M6 6l12 12',
+  edit: 'M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z',
+  delete: 'M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2',
+  chevronDown: 'M6 9l6 6 6-6',
+  drag: 'M8 6h1M15 6h1M8 12h1M15 12h1M8 18h1M15 18h1',
+  spinner: '',
+} as const
 
 export default function SurveysPage() {
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -70,6 +61,13 @@ export default function SurveysPage() {
   const [updatingOption, setUpdatingOption] = useState(false)
   const [expandedQuestions, setExpandedQuestions] = useState<Set<number>>(new Set())
   const [dragQuestionId, setDragQuestionId] = useState<number | null>(null)
+
+  const createDialogRef = useRef<HTMLDialogElement>(null)
+  const editSurveyDialogRef = useRef<HTMLDialogElement>(null)
+  const addQuestionDialogRef = useRef<HTMLDialogElement>(null)
+  const editQuestionDialogRef = useRef<HTMLDialogElement>(null)
+  const addOptionDialogRef = useRef<HTMLDialogElement>(null)
+  const editOptionDialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
     fetchSurveys()
@@ -103,6 +101,48 @@ export default function SurveysPage() {
   useEffect(() => {
     if (editOptionOpen) setEditOptionText(editOptionOpen.o.text)
   }, [editOptionOpen])
+
+  useEffect(() => {
+    if (createOpen) createDialogRef.current?.showModal()
+    else createDialogRef.current?.close()
+  }, [createOpen])
+
+  useEffect(() => {
+    if (editSurveyOpen) editSurveyDialogRef.current?.showModal()
+    else editSurveyDialogRef.current?.close()
+  }, [editSurveyOpen])
+
+  useEffect(() => {
+    if (addQuestionOpen) addQuestionDialogRef.current?.showModal()
+    else addQuestionDialogRef.current?.close()
+  }, [addQuestionOpen])
+
+  useEffect(() => {
+    if (editQuestionOpen) editQuestionDialogRef.current?.showModal()
+    else editQuestionDialogRef.current?.close()
+  }, [editQuestionOpen])
+
+  useEffect(() => {
+    if (addOptionOpen) addOptionDialogRef.current?.showModal()
+    else addOptionDialogRef.current?.close()
+  }, [addOptionOpen])
+
+  useEffect(() => {
+    if (editOptionOpen) editOptionDialogRef.current?.showModal()
+    else editOptionDialogRef.current?.close()
+  }, [editOptionOpen])
+
+  const closeDialogOnBackdrop = useCallback((dialog: HTMLDialogElement | null, close: () => void) => {
+    if (!dialog) return
+    const handler = (e: MouseEvent) => {
+      const rect = dialog.getBoundingClientRect()
+      if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+        close()
+      }
+    }
+    dialog.addEventListener('click', handler)
+    return () => dialog.removeEventListener('click', handler)
+  }, [])
 
   const handleCreateSurvey = async () => {
     if (!newTitle.trim()) return
@@ -310,10 +350,17 @@ export default function SurveysPage() {
     setDragQuestionId(null)
   }
 
+  const sortedQuestions = selectedSurvey
+    ? [...selectedSurvey.questions].sort((a, b) => a.sortOrder - b.sortOrder)
+    : []
+
   if (loading) {
     return (
       <div className="surveys-page">
-        <Spinner size="large" label="Загрузка…" />
+        <div className="surveys-loading">
+          <div className="surveys-spinner" />
+          <span>Загрузка…</span>
+        </div>
       </div>
     )
   }
@@ -321,331 +368,438 @@ export default function SurveysPage() {
   return (
     <div className="surveys-page">
       {error && (
-        <MessageBar intent="error" className="surveys-message">
-          <MessageBarBody>{error}</MessageBarBody>
-          <Button
-            appearance="transparent"
-            icon={<Dismiss24Regular />}
-            onClick={() => setError(null)}
-            aria-label="Закрыть"
-          />
-        </MessageBar>
+        <div className="surveys-message surveys-message--error">
+          <span className="surveys-message-text">{error}</span>
+          <button className="surveys-message-close" onClick={() => setError(null)} aria-label="Закрыть">
+            <SvgIcon d={ICONS.close} size={16} />
+          </button>
+        </div>
       )}
+
       <div className="surveys-layout">
         <aside className="surveys-sidebar">
           <div className="surveys-sidebar-header">
-            <h2>Опросы</h2>
-            <Button
-              appearance="primary"
-              icon={<Add24Regular />}
+            <h2 className="surveys-sidebar-title">Опросы</h2>
+            <button
+              className="surveys-btn surveys-btn--primary"
               onClick={() => {
                 setCreateOpen(true)
                 setNewTitle('')
                 setNewShowTitle(false)
               }}
             >
+              <SvgIcon d={ICONS.add} size={16} />
               Создать
-            </Button>
+            </button>
           </div>
           <ul className="surveys-list">
             {surveys.map((s) => (
               <li
                 key={s.id}
-                className={`surveys-list-item ${selectedSurvey?.id === s.id ? 'selected' : ''}`}
+                className={`surveys-list-item${selectedSurvey?.id === s.id ? ' surveys-list-item--selected' : ''}`}
                 onClick={() => setSelectedSurvey(s)}
               >
                 <span className="surveys-list-title">{s.title}</span>
                 <div className="surveys-list-actions" onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    appearance="subtle"
-                    icon={<Edit24Regular />}
-                    size="small"
+                  <button
+                    className="surveys-icon-btn"
                     onClick={() => setEditSurveyOpen(s)}
                     aria-label="Редактировать"
-                  />
-                  <Button
-                    appearance="subtle"
-                    icon={<Delete24Regular />}
-                    size="small"
+                  >
+                    <SvgIcon d={ICONS.edit} size={14} />
+                  </button>
+                  <button
+                    className="surveys-icon-btn surveys-icon-btn--danger"
                     onClick={() => handleDeleteSurvey(s)}
                     aria-label="Удалить"
-                  />
+                  >
+                    <SvgIcon d={ICONS.delete} size={14} />
+                  </button>
                 </div>
               </li>
             ))}
           </ul>
         </aside>
+
         <main className="surveys-main">
           {selectedSurvey ? (
             <>
-              <h3 className="surveys-main-title">{selectedSurvey.title}</h3>
-              <p className="surveys-main-hint">Вопросы и варианты ответов. Тип: один вариант (radio) или несколько (checkbox).</p>
-              <div className="surveys-questions">
-                {selectedSurvey.questions
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((q) => (
-                    <div
-                      key={q.id}
-                      className="surveys-question-block"
-                      draggable
-                      onDragStart={() => setDragQuestionId(q.id)}
-                      onDragOver={handleQuestionDragOver}
-                      onDrop={() => handleQuestionDrop(q.id)}
-                      style={{ cursor: 'grab' }}
-                    >
-                      <div className="surveys-question-header">
-                        <Button
-                          appearance="subtle"
-                          icon={expandedQuestions.has(q.id) ? <ChevronUp24Regular /> : <ChevronDown24Regular />}
-                          onClick={() => toggleQuestion(q.id)}
-                          size="small"
-                        />
-                        <span className="surveys-question-text">{q.text}</span>
-                        <span className="surveys-question-type">{q.choiceType === 'single' ? 'Один вариант' : 'Несколько вариантов'}</span>
-                        <div className="surveys-question-actions">
-                          <Button
-                            appearance="subtle"
-                            icon={<Edit24Regular />}
-                            size="small"
-                            onClick={() => setEditQuestionOpen(q)}
-                            aria-label="Редактировать"
-                          />
-                          <Button
-                            appearance="subtle"
-                            icon={<Delete24Regular />}
-                            size="small"
-                            onClick={() => handleDeleteQuestion(q)}
-                            aria-label="Удалить"
-                          />
-                        </div>
-                      </div>
-                      {expandedQuestions.has(q.id) && (
-                        <div className="surveys-options">
-                          {q.options.map((o) => (
-                            <div key={o.id} className="surveys-option-row">
-                              <span className="surveys-option-text">{o.text}</span>
-                              <Button
-                                appearance="subtle"
-                                icon={<Edit24Regular />}
-                                size="small"
-                                onClick={() => setEditOptionOpen({ q, o })}
-                                aria-label="Редактировать"
-                              />
-                              <Button
-                                appearance="subtle"
-                                icon={<Delete24Regular />}
-                                size="small"
-                                onClick={() => handleDeleteOption(q, o)}
-                                aria-label="Удалить"
-                              />
-                            </div>
-                          ))}
-                          <Button
-                            appearance="subtle"
-                            icon={<Add24Regular />}
-                            onClick={() => {
-                              setAddOptionOpen(q)
-                              setNewOptionText('')
-                            }}
-                          >
-                            Добавить вариант
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+              <div className="surveys-main-header">
+                <h3 className="surveys-main-title">{selectedSurvey.title}</h3>
+                <span className="surveys-main-badge">{sortedQuestions.length} вопросов</span>
               </div>
-              <Button
-                appearance="primary"
-                icon={<Add24Regular />}
+              <p className="surveys-main-hint">Перетаскивайте вопросы для сортировки. Нажмите на стрелку, чтобы развернуть варианты ответов.</p>
+
+              <div className="surveys-questions">
+                {sortedQuestions.map((q) => (
+                  <div
+                    key={q.id}
+                    className={`surveys-question-block${dragQuestionId === q.id ? ' surveys-question-block--dragging' : ''}`}
+                    draggable
+                    onDragStart={() => setDragQuestionId(q.id)}
+                    onDragOver={handleQuestionDragOver}
+                    onDrop={() => handleQuestionDrop(q.id)}
+                  >
+                    <div className="surveys-question-header">
+                      <button
+                        className="surveys-question-drag-handle"
+                        aria-label="Перетащить"
+                      >
+                        <SvgIcon d={ICONS.drag} size={16} />
+                      </button>
+                      <button
+                        className={`surveys-question-toggle${expandedQuestions.has(q.id) ? ' surveys-question-toggle--expanded' : ''}`}
+                        onClick={() => toggleQuestion(q.id)}
+                      >
+                        <SvgIcon d={ICONS.chevronDown} size={14} />
+                      </button>
+                      <span className="surveys-question-text">{q.text}</span>
+                      <span className="surveys-question-type">{q.choiceType === 'single' ? 'Один вариант' : 'Несколько'}</span>
+                      <div className="surveys-question-actions">
+                        <button
+                          className="surveys-icon-btn"
+                          onClick={() => setEditQuestionOpen(q)}
+                          aria-label="Редактировать"
+                        >
+                          <SvgIcon d={ICONS.edit} size={14} />
+                        </button>
+                        <button
+                          className="surveys-icon-btn surveys-icon-btn--danger"
+                          onClick={() => handleDeleteQuestion(q)}
+                          aria-label="Удалить"
+                        >
+                          <SvgIcon d={ICONS.delete} size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    {expandedQuestions.has(q.id) && (
+                      <div className="surveys-options">
+                        {q.options.map((o) => (
+                          <div key={o.id} className="surveys-option-row">
+                            <span className="surveys-option-text">{o.text}</span>
+                            <button
+                              className="surveys-icon-btn"
+                              onClick={() => setEditOptionOpen({ q, o })}
+                              aria-label="Редактировать"
+                            >
+                              <SvgIcon d={ICONS.edit} size={14} />
+                            </button>
+                            <button
+                              className="surveys-icon-btn surveys-icon-btn--danger"
+                              onClick={() => handleDeleteOption(q, o)}
+                              aria-label="Удалить"
+                            >
+                              <SvgIcon d={ICONS.delete} size={14} />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          className="surveys-btn surveys-btn--ghost"
+                          onClick={() => {
+                            setAddOptionOpen(q)
+                            setNewOptionText('')
+                          }}
+                        >
+                          <SvgIcon d={ICONS.add} size={14} />
+                          Добавить вариант
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <button
+                className="surveys-btn surveys-btn--primary"
                 onClick={() => {
                   setAddQuestionOpen(true)
                   setNewQuestionText('')
                   setNewQuestionType('single')
                 }}
               >
+                <SvgIcon d={ICONS.add} size={16} />
                 Добавить вопрос
-              </Button>
+              </button>
             </>
           ) : (
-            <p className="surveys-empty">Выберите опрос слева или создайте новый.</p>
+            <div className="surveys-empty">
+              <div className="surveys-empty-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.3">
+                  <path d="M9 12h6M12 9v6M9 5H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2h-4" />
+                  <path d="M9 5a2 2 0 012-2h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <p>Выберите опрос слева или создайте новый.</p>
+            </div>
           )}
         </main>
       </div>
 
-      {/* Create survey dialog */}
-      <Dialog open={createOpen} onOpenChange={(_, d) => setCreateOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Новый опрос</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="new-survey-title">Название</Label>
-              <Input
-                id="new-survey-title"
-                value={newTitle}
-                onChange={(_, d) => setNewTitle(d.value)}
-                placeholder="Название опроса"
-              />
-              <Checkbox
+      <dialog ref={createDialogRef} className="surveys-dialog" onClick={(e) => {
+        if (e.target === createDialogRef.current) setCreateOpen(false)
+      }}>
+        <div className="surveys-dialog-content">
+          <div className="surveys-dialog-header">
+            <h2 className="surveys-dialog-title">Новый опрос</h2>
+            <button className="surveys-icon-btn" onClick={() => setCreateOpen(false)} aria-label="Закрыть">
+              <SvgIcon d={ICONS.close} size={18} />
+            </button>
+          </div>
+          <div className="surveys-dialog-body">
+            <label className="surveys-label" htmlFor="new-survey-title">Название</label>
+            <input
+              id="new-survey-title"
+              className="surveys-input"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Название опроса"
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateSurvey()}
+            />
+            <label className="surveys-checkbox">
+              <input
+                type="checkbox"
                 checked={newShowTitle}
-                onChange={(_, d) => setNewShowTitle(d.checked === true)}
-                label="Отображать заголовок опроса"
-                style={{ marginTop: '0.75rem' }}
+                onChange={(e) => setNewShowTitle(e.target.checked)}
               />
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setCreateOpen(false)}>Отмена</Button>
-              <Button appearance="primary" onClick={handleCreateSurvey} disabled={creating || !newTitle.trim()}>
-                {creating ? 'Создание…' : 'Создать'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+              <span>Отображать заголовок опроса</span>
+            </label>
+          </div>
+          <div className="surveys-dialog-footer">
+            <button className="surveys-btn" onClick={() => setCreateOpen(false)}>Отмена</button>
+            <button
+              className="surveys-btn surveys-btn--primary"
+              onClick={handleCreateSurvey}
+              disabled={creating || !newTitle.trim()}
+            >
+              {creating ? 'Создание…' : 'Создать'}
+            </button>
+          </div>
+        </div>
+      </dialog>
 
-      {/* Edit survey dialog */}
-      <Dialog open={!!editSurveyOpen} onOpenChange={(_, d) => !d.open && setEditSurveyOpen(null)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Редактировать опрос</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="edit-survey-title">Название</Label>
-              <Input
-                id="edit-survey-title"
-                value={editTitle}
-                onChange={(_, d) => setEditTitle(d.value)}
-                placeholder="Название опроса"
-              />
-              <Checkbox
+      <dialog ref={editSurveyDialogRef} className="surveys-dialog" onClick={(e) => {
+        if (e.target === editSurveyDialogRef.current) setEditSurveyOpen(null)
+      }}>
+        <div className="surveys-dialog-content">
+          <div className="surveys-dialog-header">
+            <h2 className="surveys-dialog-title">Редактировать опрос</h2>
+            <button className="surveys-icon-btn" onClick={() => setEditSurveyOpen(null)} aria-label="Закрыть">
+              <SvgIcon d={ICONS.close} size={18} />
+            </button>
+          </div>
+          <div className="surveys-dialog-body">
+            <label className="surveys-label" htmlFor="edit-survey-title">Название</label>
+            <input
+              id="edit-survey-title"
+              className="surveys-input"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              placeholder="Название опроса"
+              onKeyDown={(e) => e.key === 'Enter' && handleUpdateSurvey()}
+            />
+            <label className="surveys-checkbox">
+              <input
+                type="checkbox"
                 checked={editShowTitle}
-                onChange={(_, d) => setEditShowTitle(d.checked === true)}
-                label="Отображать заголовок опроса"
-                style={{ marginTop: '0.75rem' }}
+                onChange={(e) => setEditShowTitle(e.target.checked)}
               />
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setEditSurveyOpen(null)}>Отмена</Button>
-              <Button appearance="primary" onClick={handleUpdateSurvey} disabled={updatingSurvey || !editTitle.trim()}>
-                {updatingSurvey ? 'Сохранение…' : 'Сохранить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+              <span>Отображать заголовок опроса</span>
+            </label>
+          </div>
+          <div className="surveys-dialog-footer">
+            <button className="surveys-btn" onClick={() => setEditSurveyOpen(null)}>Отмена</button>
+            <button
+              className="surveys-btn surveys-btn--primary"
+              onClick={handleUpdateSurvey}
+              disabled={updatingSurvey || !editTitle.trim()}
+            >
+              {updatingSurvey ? 'Сохранение…' : 'Сохранить'}
+            </button>
+          </div>
+        </div>
+      </dialog>
 
-      {/* Add question dialog */}
-      <Dialog open={addQuestionOpen} onOpenChange={(_, d) => setAddQuestionOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Новый вопрос</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="new-question-text">Текст вопроса</Label>
-              <Input
-                id="new-question-text"
-                value={newQuestionText}
-                onChange={(_, d) => setNewQuestionText(d.value)}
-                placeholder="Вопрос"
-              />
-              <Label style={{ marginTop: '12px' }}>Тип ответа</Label>
-              <RadioGroup
-                value={newQuestionType}
-                onChange={(_, d) => setNewQuestionType(d.value as 'single' | 'multiple')}
-                layout="horizontal"
-              >
-                <Radio value="single" label="Выбрать один вариант" />
-                <Radio value="multiple" label="Отметить несколько вариантов" />
-              </RadioGroup>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setAddQuestionOpen(false)}>Отмена</Button>
-              <Button appearance="primary" onClick={handleCreateQuestion} disabled={creatingQuestion || !newQuestionText.trim()}>
-                {creatingQuestion ? 'Создание…' : 'Добавить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      <dialog ref={addQuestionDialogRef} className="surveys-dialog" onClick={(e) => {
+        if (e.target === addQuestionDialogRef.current) setAddQuestionOpen(false)
+      }}>
+        <div className="surveys-dialog-content">
+          <div className="surveys-dialog-header">
+            <h2 className="surveys-dialog-title">Новый вопрос</h2>
+            <button className="surveys-icon-btn" onClick={() => setAddQuestionOpen(false)} aria-label="Закрыть">
+              <SvgIcon d={ICONS.close} size={18} />
+            </button>
+          </div>
+          <div className="surveys-dialog-body">
+            <label className="surveys-label" htmlFor="new-question-text">Текст вопроса</label>
+            <input
+              id="new-question-text"
+              className="surveys-input"
+              value={newQuestionText}
+              onChange={(e) => setNewQuestionText(e.target.value)}
+              placeholder="Вопрос"
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateQuestion()}
+            />
+            <label className="surveys-label">Тип ответа</label>
+            <div className="surveys-radio-group">
+              <label className="surveys-radio">
+                <input
+                  type="radio"
+                  name="newQuestionType"
+                  value="single"
+                  checked={newQuestionType === 'single'}
+                  onChange={() => setNewQuestionType('single')}
+                />
+                <span>Выбрать один вариант</span>
+              </label>
+              <label className="surveys-radio">
+                <input
+                  type="radio"
+                  name="newQuestionType"
+                  value="multiple"
+                  checked={newQuestionType === 'multiple'}
+                  onChange={() => setNewQuestionType('multiple')}
+                />
+                <span>Отметить несколько вариантов</span>
+              </label>
+            </div>
+          </div>
+          <div className="surveys-dialog-footer">
+            <button className="surveys-btn" onClick={() => setAddQuestionOpen(false)}>Отмена</button>
+            <button
+              className="surveys-btn surveys-btn--primary"
+              onClick={handleCreateQuestion}
+              disabled={creatingQuestion || !newQuestionText.trim()}
+            >
+              {creatingQuestion ? 'Создание…' : 'Добавить'}
+            </button>
+          </div>
+        </div>
+      </dialog>
 
-      {/* Edit question dialog */}
-      <Dialog open={!!editQuestionOpen} onOpenChange={(_, d) => !d.open && setEditQuestionOpen(null)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Редактировать вопрос</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="edit-question-text">Текст вопроса</Label>
-              <Input
-                id="edit-question-text"
-                value={editQuestionText}
-                onChange={(_, d) => setEditQuestionText(d.value)}
-                placeholder="Вопрос"
-              />
-              <Label style={{ marginTop: '12px' }}>Тип ответа</Label>
-              <RadioGroup
-                value={editQuestionType}
-                onChange={(_, d) => setEditQuestionType(d.value as 'single' | 'multiple')}
-                layout="horizontal"
-              >
-                <Radio value="single" label="Выбрать один вариант" />
-                <Radio value="multiple" label="Отметить несколько вариантов" />
-              </RadioGroup>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setEditQuestionOpen(null)}>Отмена</Button>
-              <Button appearance="primary" onClick={handleUpdateQuestion} disabled={updatingQuestion || !editQuestionText.trim()}>
-                {updatingQuestion ? 'Сохранение…' : 'Сохранить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      <dialog ref={editQuestionDialogRef} className="surveys-dialog" onClick={(e) => {
+        if (e.target === editQuestionDialogRef.current) setEditQuestionOpen(null)
+      }}>
+        <div className="surveys-dialog-content">
+          <div className="surveys-dialog-header">
+            <h2 className="surveys-dialog-title">Редактировать вопрос</h2>
+            <button className="surveys-icon-btn" onClick={() => setEditQuestionOpen(null)} aria-label="Закрыть">
+              <SvgIcon d={ICONS.close} size={18} />
+            </button>
+          </div>
+          <div className="surveys-dialog-body">
+            <label className="surveys-label" htmlFor="edit-question-text">Текст вопроса</label>
+            <input
+              id="edit-question-text"
+              className="surveys-input"
+              value={editQuestionText}
+              onChange={(e) => setEditQuestionText(e.target.value)}
+              placeholder="Вопрос"
+              onKeyDown={(e) => e.key === 'Enter' && handleUpdateQuestion()}
+            />
+            <label className="surveys-label">Тип ответа</label>
+            <div className="surveys-radio-group">
+              <label className="surveys-radio">
+                <input
+                  type="radio"
+                  name="editQuestionType"
+                  value="single"
+                  checked={editQuestionType === 'single'}
+                  onChange={() => setEditQuestionType('single')}
+                />
+                <span>Выбрать один вариант</span>
+              </label>
+              <label className="surveys-radio">
+                <input
+                  type="radio"
+                  name="editQuestionType"
+                  value="multiple"
+                  checked={editQuestionType === 'multiple'}
+                  onChange={() => setEditQuestionType('multiple')}
+                />
+                <span>Отметить несколько вариантов</span>
+              </label>
+            </div>
+          </div>
+          <div className="surveys-dialog-footer">
+            <button className="surveys-btn" onClick={() => setEditQuestionOpen(null)}>Отмена</button>
+            <button
+              className="surveys-btn surveys-btn--primary"
+              onClick={handleUpdateQuestion}
+              disabled={updatingQuestion || !editQuestionText.trim()}
+            >
+              {updatingQuestion ? 'Сохранение…' : 'Сохранить'}
+            </button>
+          </div>
+        </div>
+      </dialog>
 
-      {/* Add option dialog */}
-      <Dialog open={!!addOptionOpen} onOpenChange={(_, d) => !d.open && setAddOptionOpen(null)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Новый вариант ответа</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="new-option-text">Текст варианта</Label>
-              <Input
-                id="new-option-text"
-                value={newOptionText}
-                onChange={(_, d) => setNewOptionText(d.value)}
-                placeholder="Вариант ответа"
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setAddOptionOpen(null)}>Отмена</Button>
-              <Button appearance="primary" onClick={handleCreateOption} disabled={creatingOption || !newOptionText.trim()}>
-                {creatingOption ? 'Создание…' : 'Добавить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      <dialog ref={addOptionDialogRef} className="surveys-dialog" onClick={(e) => {
+        if (e.target === addOptionDialogRef.current) setAddOptionOpen(null)
+      }}>
+        <div className="surveys-dialog-content">
+          <div className="surveys-dialog-header">
+            <h2 className="surveys-dialog-title">Новый вариант ответа</h2>
+            <button className="surveys-icon-btn" onClick={() => setAddOptionOpen(null)} aria-label="Закрыть">
+              <SvgIcon d={ICONS.close} size={18} />
+            </button>
+          </div>
+          <div className="surveys-dialog-body">
+            <label className="surveys-label" htmlFor="new-option-text">Текст варианта</label>
+            <input
+              id="new-option-text"
+              className="surveys-input"
+              value={newOptionText}
+              onChange={(e) => setNewOptionText(e.target.value)}
+              placeholder="Вариант ответа"
+              onKeyDown={(e) => e.key === 'Enter' && handleCreateOption()}
+            />
+          </div>
+          <div className="surveys-dialog-footer">
+            <button className="surveys-btn" onClick={() => setAddOptionOpen(null)}>Отмена</button>
+            <button
+              className="surveys-btn surveys-btn--primary"
+              onClick={handleCreateOption}
+              disabled={creatingOption || !newOptionText.trim()}
+            >
+              {creatingOption ? 'Создание…' : 'Добавить'}
+            </button>
+          </div>
+        </div>
+      </dialog>
 
-      {/* Edit option dialog */}
-      <Dialog open={!!editOptionOpen} onOpenChange={(_, d) => !d.open && setEditOptionOpen(null)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Редактировать вариант ответа</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="edit-option-text">Текст варианта</Label>
-              <Input
-                id="edit-option-text"
-                value={editOptionText}
-                onChange={(_, d) => setEditOptionText(d.value)}
-                placeholder="Вариант ответа"
-              />
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setEditOptionOpen(null)}>Отмена</Button>
-              <Button appearance="primary" onClick={handleUpdateOption} disabled={updatingOption || !editOptionText.trim()}>
-                {updatingOption ? 'Сохранение…' : 'Сохранить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      <dialog ref={editOptionDialogRef} className="surveys-dialog" onClick={(e) => {
+        if (e.target === editOptionDialogRef.current) setEditOptionOpen(null)
+      }}>
+        <div className="surveys-dialog-content">
+          <div className="surveys-dialog-header">
+            <h2 className="surveys-dialog-title">Редактировать вариант ответа</h2>
+            <button className="surveys-icon-btn" onClick={() => setEditOptionOpen(null)} aria-label="Закрыть">
+              <SvgIcon d={ICONS.close} size={18} />
+            </button>
+          </div>
+          <div className="surveys-dialog-body">
+            <label className="surveys-label" htmlFor="edit-option-text">Текст варианта</label>
+            <input
+              id="edit-option-text"
+              className="surveys-input"
+              value={editOptionText}
+              onChange={(e) => setEditOptionText(e.target.value)}
+              placeholder="Вариант ответа"
+              onKeyDown={(e) => e.key === 'Enter' && handleUpdateOption()}
+            />
+          </div>
+          <div className="surveys-dialog-footer">
+            <button className="surveys-btn" onClick={() => setEditOptionOpen(null)}>Отмена</button>
+            <button
+              className="surveys-btn surveys-btn--primary"
+              onClick={handleUpdateOption}
+              disabled={updatingOption || !editOptionText.trim()}
+            >
+              {updatingOption ? 'Сохранение…' : 'Сохранить'}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   )
 }

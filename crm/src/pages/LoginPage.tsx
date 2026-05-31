@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Input, Label, Button, MessageBar, MessageBarBody } from '@fluentui/react-components'
 import { login } from '../api'
 import { setToken } from '../auth'
 import './LoginPage.css'
@@ -34,34 +33,44 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <form className="login-form" onSubmit={handleSubmit}>
-        <h1 className="login-form__title">Вход в CRM</h1>
+        <div className="login-form__icon">
+          <svg viewBox="0 0 36 36" fill="none">
+            <rect width="36" height="36" rx="10" fill="var(--accent)" />
+            <path d="M10 25V11l9 7-9 7zM19 25V11l9 7-9 7z" fill="#fff" opacity="0.92" />
+          </svg>
+        </div>
+        <h1 className="login-form__title">Wedding CRM</h1>
+        <p className="login-form__subtitle">Войдите в панель управления</p>
         {error && (
-          <MessageBar intent="error" className="login-form__error">
-            <MessageBarBody>{error}</MessageBarBody>
-          </MessageBar>
+          <div className="login-form__error">{error}</div>
         )}
-        <Label htmlFor="login">Логин</Label>
-        <Input
-          id="login"
-          value={loginValue}
-          onChange={(_, d) => setLoginValue(d.value)}
-          placeholder="Логин"
-          autoComplete="username"
-          disabled={loading}
-        />
-        <Label htmlFor="password">Пароль</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(_, d) => setPassword(d.value)}
-          placeholder="Пароль"
-          autoComplete="current-password"
-          disabled={loading}
-        />
-        <Button appearance="primary" type="submit" disabled={loading} className="login-form__submit">
+        <div className="field">
+          <label htmlFor="login">Логин</label>
+          <input
+            id="login"
+            type="text"
+            value={loginValue}
+            onChange={(e) => setLoginValue(e.target.value)}
+            placeholder="Введите логин"
+            autoComplete="username"
+            disabled={loading}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="password">Пароль</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Введите пароль"
+            autoComplete="current-password"
+            disabled={loading}
+          />
+        </div>
+        <button type="submit" disabled={loading} className="btn btn--primary login-form__submit">
           {loading ? 'Вход…' : 'Войти'}
-        </Button>
+        </button>
       </form>
     </div>
   )

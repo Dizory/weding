@@ -1,22 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Button,
-  Spinner,
-  MessageBar,
-  MessageBarBody,
-  Input,
-  Label,
-  Dialog,
-  DialogSurface,
-  DialogTitle,
-  DialogBody,
-  DialogActions,
-  DialogContent,
-  Field,
-  Divider
-} from '@fluentui/react-components'
-import { PersonDelete24Regular, PersonEdit24Regular } from '@fluentui/react-icons'
 import { fetchAdmins, createAdmin, deleteAdmin, updateMyCredentials, authMe, type AdminItem } from '../api'
 import { clearToken } from '../auth'
 import './AdminsPage.css'
@@ -27,16 +10,18 @@ export default function AdminsPage() {
   const [currentLogin, setCurrentLogin] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [createOpen, setCreateOpen] = useState(false)
+
   const [newLogin, setNewLogin] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [creating, setCreating] = useState(false)
 
-  const [editOpen, setEditOpen] = useState(false)
   const [editCurrentPassword, setEditCurrentPassword] = useState('')
   const [editNewLogin, setEditNewLogin] = useState('')
   const [editNewPassword, setEditNewPassword] = useState('')
   const [updating, setUpdating] = useState(false)
+
+  const createDialogRef = useRef<HTMLDialogElement>(null)
+  const editDialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
     Promise.all([fetchAdmins(), authMe()])
@@ -55,7 +40,7 @@ export default function AdminsPage() {
     try {
       const admin = await createAdmin(newLogin.trim(), newPassword)
       setAdmins((prev) => [...prev, admin])
-      setCreateOpen(false)
+      createDialogRef.current?.close()
       setNewLogin('')
       setNewPassword('')
     } catch (e) {
@@ -79,7 +64,7 @@ export default function AdminsPage() {
     setEditNewLogin(currentLogin ?? '')
     setEditNewPassword('')
     setEditCurrentPassword('')
-    setEditOpen(true)
+    editDialogRef.current?.showModal()
   }
 
   const handleEdit = async () => {
@@ -95,7 +80,7 @@ export default function AdminsPage() {
         newLogin: hasNewLogin ? editNewLogin.trim() : undefined,
         newPassword: hasNewPassword ? editNewPassword : undefined
       })
-      setEditOpen(false)
+      editDialogRef.current?.close()
       setAdmins((prev) => prev.map((a) => (a.login === currentLogin ? { ...a, login: res.login } : a)))
       setCurrentLogin(res.login)
       if (hasNewLogin && res.login !== currentLogin) {
@@ -111,8 +96,9 @@ export default function AdminsPage() {
 
   if (loading) {
     return (
-      <div className="admins-page">
-        <Spinner label="Загрузка…" />
+      <div className="admins-page admins-page--loading">
+        <div className="spinner" />
+        <p className="admins-page__loading-text">Загрузка…</p>
       </div>
     )
   }
@@ -121,41 +107,55 @@ export default function AdminsPage() {
     <div className="admins-page">
       <div className="admins-page__header">
         <h1>Администраторы</h1>
-        <Button appearance="primary" onClick={() => setCreateOpen(true)}>
+        <button className="btn btn--primary" onClick={() => createDialogRef.current?.showModal()}>
+          <svg viewBox="0 0 16 16" fill="none" className="btn__icon">
+            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
           Добавить
-        </Button>
+        </button>
       </div>
-      {error && (
-        <MessageBar intent="error">
-          <MessageBarBody>{error}</MessageBarBody>
-        </MessageBar>
-      )}
+
+      {error && <div className="error-bar">{error}</div>}
+
       <div className="admins-page__list">
         {admins.length === 0 ? (
           <p className="admins-page__empty">Нет администраторов</p>
         ) : (
           admins.map((a) => (
-            <div key={a.id} className="admins-page__item">
-              <span className="admins-page__login">{a.login}</span>
-              <span className="admins-page__date">
-                {new Date(a.createdAt).toLocaleDateString('ru')}
-              </span>
-              <div className="admins-page__actions">
+            <div key={a.id} className="admin-card">
+              <div className="admin-card__info">
+                <div className="admin-card__avatar">
+                  {a.login.charAt(0).toUpperCase()}
+                </div>
+                <div className="admin-card__details">
+                  <span className="admin-card__login">{a.login}</span>
+                  <span className="admin-card__date">
+                    Создан {new Date(a.createdAt).toLocaleDateString('ru')}
+                  </span>
+                </div>
+              </div>
+              <div className="admin-card__actions">
                 {a.login === currentLogin && (
-                  <Button
-                    appearance="subtle"
-                    icon={<PersonEdit24Regular />}
+                  <button
+                    className="btn btn--ghost"
                     aria-label="Изменить учётные данные"
                     onClick={openEdit}
-                  />
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" className="btn__icon">
+                      <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
+                    </svg>
+                  </button>
                 )}
                 {a.login !== currentLogin && (
-                  <Button
-                    appearance="subtle"
-                    icon={<PersonDelete24Regular />}
+                  <button
+                    className="btn btn--ghost btn--danger"
                     aria-label="Удалить"
                     onClick={() => handleDelete(a.id)}
-                  />
+                  >
+                    <svg viewBox="0 0 16 16" fill="none" className="btn__icon">
+                      <path d="M4 5h8l-.7 8.5a1 1 0 01-1 .5H5.7a1 1 0 01-1-.5L4 5zM3 5h10M6 5V3a1 1 0 011-1h2a1 1 0 011 1v2" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
                 )}
               </div>
             </div>
@@ -163,110 +163,135 @@ export default function AdminsPage() {
         )}
       </div>
 
-      <Dialog open={editOpen} onOpenChange={(_, d) => setEditOpen(d.open)}>
-        <DialogSurface className="admins-edit-dialog">
-          <DialogBody>
-            <DialogTitle>
-              Изменить учётные данные
-              {currentLogin && (
-                <span className="admins-edit-dialog__subtitle">Вход: {currentLogin}</span>
-              )}
-            </DialogTitle>
-            <DialogContent className="admins-edit-dialog__content">
-              <div className="admins-edit-dialog__section">
-                <p className="admins-edit-dialog__section-title">Подтверждение</p>
-                <Field
-                  label="Текущий пароль"
-                  hint="Введите текущий пароль для подтверждения"
-                  required
-                >
-                  <Input
-                    id="edit-current-password"
-                    type="password"
-                    value={editCurrentPassword}
-                    onChange={(_, d) => setEditCurrentPassword(d.value)}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                  />
-                </Field>
-              </div>
-              <Divider className="admins-edit-dialog__divider" />
-              <div className="admins-edit-dialog__section">
-                <p className="admins-edit-dialog__section-title">Новые данные</p>
-                <p className="admins-edit-dialog__section-hint">Укажите новые значения. Пустые поля не изменятся.</p>
-                <Field label="Новый логин" hint="Оставьте пустым или без изменений, чтобы не менять">
-                  <Input
-                    id="edit-new-login"
-                    value={editNewLogin}
-                    onChange={(_, d) => setEditNewLogin(d.value)}
-                    placeholder={currentLogin ?? 'Логин'}
-                    autoComplete="username"
-                  />
-                </Field>
-                <Field label="Новый пароль" hint="Минимум 6 символов. Оставьте пустым, чтобы не менять">
-                  <Input
-                    id="edit-new-password"
-                    type="password"
-                    value={editNewPassword}
-                    onChange={(_, d) => setEditNewPassword(d.value)}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                  />
-                </Field>
-              </div>
-            </DialogContent>
-            <DialogActions className="admins-edit-dialog__actions">
-              <Button appearance="secondary" onClick={() => setEditOpen(false)}>Отмена</Button>
-              <Button
-                appearance="primary"
-                onClick={handleEdit}
-                disabled={
-                  updating ||
-                  !editCurrentPassword ||
-                  ((!editNewLogin.trim() || editNewLogin.trim() === currentLogin) && editNewPassword.length < 6)
-                }
-              >
-                {updating ? 'Сохранение…' : 'Сохранить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
-
-      <Dialog open={createOpen} onOpenChange={(_, d) => setCreateOpen(d.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Новый администратор</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="new-admin-login">Логин</Label>
-              <Input
+      <dialog
+        ref={createDialogRef}
+        className="modal"
+        onClick={(e) => { if (e.target === createDialogRef.current) createDialogRef.current.close() }}
+      >
+        <div className="modal__content">
+          <div className="modal__header">
+            <h2 className="modal__title">Новый администратор</h2>
+            <button className="modal__close" onClick={() => createDialogRef.current?.close()}>
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+          <div className="modal__body">
+            <div className="field">
+              <label htmlFor="new-admin-login">Логин</label>
+              <input
                 id="new-admin-login"
+                type="text"
                 value={newLogin}
-                onChange={(_, d) => setNewLogin(d.value)}
+                onChange={(e) => setNewLogin(e.target.value)}
                 placeholder="Логин"
               />
-              <Label htmlFor="new-admin-password">Пароль</Label>
-              <Input
+            </div>
+            <div className="field">
+              <label htmlFor="new-admin-password">Пароль</label>
+              <input
                 id="new-admin-password"
                 type="password"
                 value={newPassword}
-                onChange={(_, d) => setNewPassword(d.value)}
+                onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Пароль (мин. 6 символов)"
               />
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" onClick={() => setCreateOpen(false)}>Отмена</Button>
-              <Button
-                appearance="primary"
-                onClick={handleCreate}
-                disabled={creating || !newLogin.trim() || newPassword.length < 6}
-              >
-                {creating ? 'Создание…' : 'Создать'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+            </div>
+          </div>
+          <div className="modal__footer">
+            <button className="btn btn--secondary" onClick={() => createDialogRef.current?.close()}>Отмена</button>
+            <button
+              className="btn btn--primary"
+              onClick={handleCreate}
+              disabled={creating || !newLogin.trim() || newPassword.length < 6}
+            >
+              {creating ? 'Создание…' : 'Создать'}
+            </button>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog
+        ref={editDialogRef}
+        className="modal"
+        onClick={(e) => { if (e.target === editDialogRef.current) editDialogRef.current.close() }}
+      >
+        <div className="modal__content">
+          <div className="modal__header">
+            <h2 className="modal__title">Изменить учётные данные</h2>
+            <button className="modal__close" onClick={() => editDialogRef.current?.close()}>
+              <svg viewBox="0 0 16 16" fill="none">
+                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+          {currentLogin && (
+            <p className="modal__subtitle">Вход: {currentLogin}</p>
+          )}
+          <div className="modal__body">
+            <div className="modal__section">
+              <p className="modal__section-title">Подтверждение</p>
+              <div className="field">
+                <label htmlFor="edit-current-password">Текущий пароль</label>
+                <input
+                  id="edit-current-password"
+                  type="password"
+                  value={editCurrentPassword}
+                  onChange={(e) => setEditCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                />
+                <span className="field__hint">Введите текущий пароль для подтверждения</span>
+              </div>
+            </div>
+            <hr className="modal__divider" />
+            <div className="modal__section">
+              <p className="modal__section-title">Новые данные</p>
+              <p className="modal__section-hint">Укажите новые значения. Пустые поля не изменятся.</p>
+              <div className="field">
+                <label htmlFor="edit-new-login">Новый логин</label>
+                <input
+                  id="edit-new-login"
+                  type="text"
+                  value={editNewLogin}
+                  onChange={(e) => setEditNewLogin(e.target.value)}
+                  placeholder={currentLogin ?? 'Логин'}
+                  autoComplete="username"
+                />
+                <span className="field__hint">Оставьте пустым или без изменений, чтобы не менять</span>
+              </div>
+              <div className="field">
+                <label htmlFor="edit-new-password">Новый пароль</label>
+                <input
+                  id="edit-new-password"
+                  type="password"
+                  value={editNewPassword}
+                  onChange={(e) => setEditNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                />
+                <span className="field__hint">Минимум 6 символов. Оставьте пустым, чтобы не менять</span>
+              </div>
+            </div>
+          </div>
+          <div className="modal__footer">
+            <button className="btn btn--secondary" onClick={() => editDialogRef.current?.close()}>Отмена</button>
+            <button
+              className="btn btn--primary"
+              onClick={handleEdit}
+              disabled={
+                updating ||
+                !editCurrentPassword ||
+                ((!editNewLogin.trim() || editNewLogin.trim() === currentLogin) && editNewPassword.length < 6)
+              }
+            >
+              {updating ? 'Сохранение…' : 'Сохранить'}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   )
 }

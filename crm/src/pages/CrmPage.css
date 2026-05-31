@@ -1,155 +1,617 @@
 .crm-page {
-  padding: 2rem;
-  max-width: 720px;
+  animation: fadeIn var(--transition) ease both;
 }
 
+.crm-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 5rem 0;
+  color: var(--text-secondary);
+}
+
+.crm-loading-text {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.crm-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
 .crm-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-.crm-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+.crm-header__title {
+  font-family: var(--font);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
 }
 
-.crm-loading {
+.crm-header__actions {
   display: flex;
-  justify-content: center;
-  padding: 4rem 0;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.crm-message {
-  margin-bottom: 1rem;
-}
-
-.crm-tree-container {
-  border: 1px solid var(--colorNeutralStroke2);
-  border-radius: 8px;
-  padding: 0.5rem;
-  background: var(--colorNeutralBackground1);
-}
-
-.crm-empty {
-  color: var(--colorNeutralForeground3);
-  padding: 2rem;
-  margin: 0;
-}
-
-.crm-inv-title-row {
-  display: block;
-}
-
-.crm-inv-link-row {
-  margin-top: 0.25rem;
-}
-
-.crm-inv-link {
-  font-size: 0.75rem;
-  color: var(--colorNeutralForeground3);
+/* Buttons */
+.crm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.3;
   cursor: pointer;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
   white-space: nowrap;
-  display: inline-block;
 }
 
-.crm-inv-link:hover {
-  color: var(--colorNeutralForeground1);
-  text-decoration: underline;
+.crm-btn svg {
+  flex-shrink: 0;
 }
 
-.crm-guest-count {
-  color: var(--colorNeutralForeground3);
-  font-size: 0.875em;
+.crm-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-.crm-inv-actions {
+.crm-btn--primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.crm-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.crm-btn--secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.crm-btn--secondary:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.crm-btn--subtle {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: transparent;
+}
+
+.crm-btn--subtle:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+/* Icon button */
+.crm-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.crm-icon-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.crm-icon-btn--danger:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.crm-icon-btn--sm {
+  width: 24px;
+  height: 24px;
+}
+
+/* Alerts */
+.crm-alert {
   display: flex;
-  gap: 0.25rem;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+  animation: fadeIn var(--transition-fast) ease both;
 }
 
-.crm-guest-phone {
-  color: var(--colorNeutralForeground3);
-  font-size: 0.875em;
-  margin-left: 0.25rem;
+.crm-alert--success {
+  background: var(--success-light);
+  color: #1a7a3a;
+  border: 1px solid #c3e6cb;
 }
 
-.crm-add-guest-form,
-.crm-edit-inv-form {
+.crm-alert--error {
+  background: var(--danger-light);
+  color: var(--danger);
+  border: 1px solid #f5c6cb;
+}
+
+.crm-alert__dismiss {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Modal overlay */
+.crm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.12s ease both;
+  padding: 1rem;
+}
+
+.crm-modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 440px;
+  animation: scaleIn 0.15s ease both;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  max-height: 90vh;
 }
 
-.crm-greeting-preview {
-  font-size: 0.875rem;
-  color: var(--colorNeutralForeground3);
+.crm-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
 }
 
-/* Подтверждённые приглашения и гости — зелёный фон */
-.crm-inv--confirmed,
-.crm-guest--confirmed {
-  background: #d4edda;
+.crm-modal__title {
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
-/* Неподтверждённые приглашения и гости — красный фон */
-.crm-inv--unconfirmed,
-.crm-guest--unconfirmed {
-  background: #f8d7da;
+.crm-modal__body {
+  padding: 0 1.25rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  overflow-y: auto;
 }
 
-.crm-survey-responses {
+.crm-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Form elements */
+.crm-label {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: -0.35rem;
+}
+
+.crm-input,
+.crm-select,
+.crm-textarea {
+  font-family: var(--font);
+  font-size: 0.82rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.crm-input:focus,
+.crm-select:focus,
+.crm-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.crm-input::placeholder,
+.crm-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.crm-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.crm-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 1.8rem;
+  cursor: pointer;
+}
+
+.crm-preview {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: -0.35rem;
+}
+
+.crm-edit-form,
+.crm-add-guest-form {
+  gap: 0.45rem;
+}
+
+/* Radio group */
+.crm-radio-group {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 0.875rem;
 }
 
-.crm-survey-response-title {
+.crm-radio-group--row {
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.crm-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.crm-radio input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.crm-radio__dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.crm-radio input:checked + .crm-radio__dot {
+  border-color: var(--accent);
+}
+
+.crm-radio input:checked + .crm-radio__dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.crm-radio:hover .crm-radio__dot {
+  border-color: var(--text-muted);
+}
+
+/* Cards */
+.crm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.crm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.crm-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+  overflow: hidden;
+}
+
+.crm-card:hover {
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.crm-card--confirmed {
+  border-left: 3px solid var(--success);
+}
+
+.crm-card--pending {
+  border-left: 3px solid var(--warning);
+}
+
+.crm-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--transition-fast);
+}
+
+.crm-card__header:hover {
+  background: var(--surface-hover);
+}
+
+.crm-card__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.crm-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   font-weight: 600;
-  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--text);
 }
 
-.crm-survey-response-item {
-  margin-left: 0.5rem;
+.crm-card__link {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  font-family: var(--font-mono);
 }
 
-.crm-survey-question {
-  color: var(--colorNeutralForeground2);
+.crm-card__link:hover {
+  color: var(--accent);
 }
 
-.crm-survey-answer {
-  color: var(--colorNeutralForeground1);
+.crm-card__actions {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.crm-card__body {
+  border-top: 1px solid var(--border-light);
+  padding: 0.65rem 0.75rem;
+  animation: fadeIn 0.15s ease both;
+}
+
+.crm-card__empty {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  padding: 0.5rem 0;
+}
+
+/* Chevron */
+.crm-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.crm-chevron--open {
+  transform: rotate(90deg);
+}
+
+/* Badge */
+.crm-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Guests list */
+.crm-guests {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 0.4rem;
+}
+
+.crm-guest {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  border: 1px solid transparent;
+  transition: all var(--transition-fast);
+  cursor: grab;
+  font-size: 0.82rem;
+}
+
+.crm-guest:hover {
+  background: var(--surface-hover);
+}
+
+.crm-guest--dragging {
+  opacity: 0.4;
+}
+
+.crm-guest__grip {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: grab;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.crm-guest__name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.crm-guest__phone {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+}
+
+.crm-guest .crm-icon-btn {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.crm-guest:hover .crm-icon-btn {
+  opacity: 1;
+}
+
+/* Survey responses */
+.crm-surveys {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.crm-surveys__title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+}
+
+.crm-survey {
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.3rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.crm-survey__title {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.crm-survey__item {
+  font-size: 0.78rem;
+  padding-left: 0.4rem;
+}
+
+.crm-survey__question {
+  color: var(--text-secondary);
+}
+
+.crm-survey__answer {
+  color: var(--text);
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {
-  .crm-page {
-    padding: 1rem;
-    max-width: 100%;
-  }
-
   .crm-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .crm-header h1 {
-    font-size: 1.25rem;
+  .crm-header__title {
+    font-size: 1.2rem;
   }
 
-  .crm-inv-actions {
+  .crm-header__actions {
+    width: 100%;
     flex-wrap: wrap;
   }
 
-  .crm-inv-link {
-    max-width: 140px;
+  .crm-card__actions {
+    flex-wrap: wrap;
+  }
+
+  .crm-card__link {
+    max-width: 160px;
+  }
+
+  .crm-modal {
+    max-width: 100%;
+    margin: 0.5rem;
+    max-height: 95vh;
   }
 }
-

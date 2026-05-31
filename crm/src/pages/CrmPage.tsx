@@ -1,27 +1,4 @@
 import { useState, useEffect } from 'react'
-import {
-  Tree,
-  TreeItem,
-  TreeItemLayout,
-  Button,
-  Spinner,
-  MessageBar,
-  MessageBarBody,
-  Dialog,
-  DialogSurface,
-  DialogTitle,
-  DialogBody,
-  DialogActions,
-  DialogContent,
-  Input,
-  Label,
-  Radio,
-  RadioGroup,
-  Dropdown,
-  Option,
-  Textarea
-} from '@fluentui/react-components'
-import { Dismiss24Regular, Add24Regular, PersonAdd24Regular, Edit24Regular, Link24Regular, Delete24Regular, ArrowDownload24Regular } from '@fluentui/react-icons'
 import { fetchInvitations, deleteInvitation, createInvitation, updateInvitation, addGuestToInvitation, removeGuestFromInvitation, reorderGuests, fetchGuests } from '../api'
 import { formatPhoneInput } from '../utils'
 import { getInvitationLink, downloadCsv } from '../utils'
@@ -30,19 +7,45 @@ import './CrmPage.css'
 
 const DEFAULT_BODY = '{greeting} {guests}!'
 
-/** Слово обращения: 1 гость М→Дорогой, Ж→Дорогая; несколько→Дорогие */
 function buildGreetingWord(guests: InvitationGuest[]): string {
   if (guests.length === 0) return 'Дорогие'
   if (guests.length === 1) return guests[0].gender === 'male' ? 'Дорогой' : 'Дорогая'
   return 'Дорогие'
 }
 
-/** Имена гостей: 0→гости, 1→имя, 2→А и Б, 3+→А, Б и В. Сначала М, затем Ж. */
 function buildGuestNames(guests: InvitationGuest[]): string {
   if (guests.length === 0) return 'гости'
   const names = [...guests].sort((a, b) => (a.gender === 'male' ? 0 : 1) - (b.gender === 'male' ? 0 : 1)).map((g) => g.name)
   if (names.length === 1) return names[0]
   return names.length === 2 ? `${names[0]} и ${names[1]}` : names.slice(0, -1).join(', ') + ' и ' + names[names.length - 1]
+}
+
+function SvgIcon({ name, size }: { name: string; size?: number }) {
+  const s = size ?? 16
+  switch (name) {
+    case 'add':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+    case 'close':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+    case 'edit':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.3" fill="none"/></svg>
+    case 'link':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M6 10a3 3 0 0 0 4 0l3-3a3 3 0 0 0-4-4L8 4" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round"/><path d="M10 6a3 3 0 0 0-4 0l-3 3a3 3 0 0 0 4 4l1-1" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round"/></svg>
+    case 'person':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" fill="none"/><path d="M3 14c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.3" fill="none"/></svg>
+    case 'trash':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M3 4h10M6 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M5 4v9a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V4" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round"/></svg>
+    case 'download':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M8 2v9M4 7l4 4 4-4M3 13h10" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    case 'chevron':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M5 6l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    case 'check':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    case 'mail':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><rect x="1.5" y="3" width="13" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none"/><path d="M1.5 4l6.5 5 6.5-5" stroke="currentColor" strokeWidth="1.2" fill="none"/></svg>
+    default:
+      return null
+  }
 }
 
 export default function CrmPage() {
@@ -68,6 +71,7 @@ export default function CrmPage() {
   const [editGuestNames, setEditGuestNames] = useState('')
   const [updatingInv, setUpdatingInv] = useState(false)
   const [dragGuest, setDragGuest] = useState<{ invId: number; guestId: number } | null>(null)
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     fetchInvitations()
@@ -245,11 +249,21 @@ export default function CrmPage() {
     setDragGuest(null)
   }
 
+  const toggleExpand = (id: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   if (loading) {
     return (
       <div className="crm-page">
         <div className="crm-loading">
-          <Spinner size="large" label="Загрузка..." />
+          <div className="crm-spinner" />
+          <span className="crm-loading-text">Загрузка...</span>
         </div>
       </div>
     )
@@ -258,11 +272,10 @@ export default function CrmPage() {
   return (
     <div className="crm-page">
       <header className="crm-header">
-        <h1>Приглашения</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button
-            appearance="subtle"
-            icon={<ArrowDownload24Regular />}
+        <h1 className="crm-header__title">Приглашения</h1>
+        <div className="crm-header__actions">
+          <button
+            className="crm-btn crm-btn--subtle"
             onClick={async () => {
               try {
                 await downloadCsv('/api/export/responses', 'responses.csv')
@@ -271,134 +284,170 @@ export default function CrmPage() {
               }
             }}
           >
+            <SvgIcon name="download" />
             Экспорт ответов
-          </Button>
-          <Button icon={<Add24Regular />} appearance="primary" onClick={() => setCreateOpen(true)}>
+          </button>
+          <button className="crm-btn crm-btn--primary" onClick={() => setCreateOpen(true)}>
+            <SvgIcon name="add" />
             Создать приглашение
-          </Button>
+          </button>
         </div>
       </header>
 
-      <Dialog open={createOpen} onOpenChange={(_, data) => setCreateOpen(data.open)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Новое приглашение</DialogTitle>
-            <DialogContent>
-              <Label htmlFor="title">Заголовок</Label>
-              <Input
+      {createOpen && (
+        <div className="crm-overlay" onClick={() => setCreateOpen(false)}>
+          <div className="crm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="crm-modal__header">
+              <h2 className="crm-modal__title">Новое приглашение</h2>
+              <button className="crm-icon-btn" onClick={() => setCreateOpen(false)}><SvgIcon name="close" /></button>
+            </div>
+            <div className="crm-modal__body">
+              <label className="crm-label" htmlFor="title">Заголовок</label>
+              <input
+                className="crm-input"
                 id="title"
                 value={newTitle}
-                onChange={(_, d) => setNewTitle(d.value)}
+                onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Свадебное приглашение"
               />
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" icon={<Dismiss24Regular />} onClick={() => setCreateOpen(false)}>
-                Отмена
-              </Button>
-              <Button
-                appearance="primary"
-                onClick={handleCreate}
-                disabled={!newTitle.trim() || creating}
-              >
+            </div>
+            <div className="crm-modal__footer">
+              <button className="crm-btn crm-btn--secondary" onClick={() => setCreateOpen(false)}>Отмена</button>
+              <button className="crm-btn crm-btn--primary" onClick={handleCreate} disabled={!newTitle.trim() || creating}>
                 {creating ? 'Создание...' : 'Создать'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <Dialog open={editInvOpen !== null} onOpenChange={(_, data) => !data.open && setEditInvOpen(null)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Редактировать приглашение</DialogTitle>
-            <DialogContent className="crm-edit-inv-form">
-              <Label htmlFor="editTitle">Заголовок</Label>
-              <Input id="editTitle" value={editTitle} onChange={(_, d) => setEditTitle(d.value)} />
-              <Label htmlFor="editGreetingWord">Слово обращения</Label>
-              <Input
+      {editInvOpen !== null && (
+        <div className="crm-overlay" onClick={() => setEditInvOpen(null)}>
+          <div className="crm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="crm-modal__header">
+              <h2 className="crm-modal__title">Редактировать приглашение</h2>
+              <button className="crm-icon-btn" onClick={() => setEditInvOpen(null)}><SvgIcon name="close" /></button>
+            </div>
+            <div className="crm-modal__body crm-edit-form">
+              <label className="crm-label" htmlFor="editTitle">Заголовок</label>
+              <input className="crm-input" id="editTitle" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+              <label className="crm-label" htmlFor="editGreetingWord">Слово обращения</label>
+              <input
+                className="crm-input"
                 id="editGreetingWord"
                 value={editGreetingWord}
-                onChange={(_, d) => setEditGreetingWord(d.value)}
+                onChange={(e) => setEditGreetingWord(e.target.value)}
                 placeholder="Дорогой / Дорогая / Дорогие (пусто — авто)"
               />
               {!editGreetingWord.trim() && editInvOpen && editInvOpen.guests.length > 0 && (
-                <span className="crm-greeting-preview">Авто: {buildGreetingWord(editInvOpen.guests)}</span>
+                <span className="crm-preview">Авто: {buildGreetingWord(editInvOpen.guests)}</span>
               )}
-              <Label htmlFor="editGuestNames">Имена гостей</Label>
-              <Input
+              <label className="crm-label" htmlFor="editGuestNames">Имена гостей</label>
+              <input
+                className="crm-input"
                 id="editGuestNames"
                 value={editGuestNames}
-                onChange={(_, d) => setEditGuestNames(d.value)}
+                onChange={(e) => setEditGuestNames(e.target.value)}
                 placeholder="Иван и Мария (пусто — авто из списка)"
               />
               {!editGuestNames.trim() && editInvOpen && editInvOpen.guests.length > 0 && (
-                <span className="crm-greeting-preview">Авто: {buildGuestNames(editInvOpen.guests)}</span>
+                <span className="crm-preview">Авто: {buildGuestNames(editInvOpen.guests)}</span>
               )}
-              <Label htmlFor="editBodyTemplate">Текст приглашения</Label>
-              <Textarea
+              <label className="crm-label" htmlFor="editBodyTemplate">Текст приглашения</label>
+              <textarea
+                className="crm-textarea"
                 id="editBodyTemplate"
                 value={editBodyTemplate}
-                onChange={(_, d) => setEditBodyTemplate(d.value)}
+                onChange={(e) => setEditBodyTemplate(e.target.value)}
                 rows={6}
               />
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" icon={<Dismiss24Regular />} onClick={() => setEditInvOpen(null)}>Отмена</Button>
-              <Button appearance="primary" onClick={handleEditInvitation} disabled={!editTitle.trim() || updatingInv}>
+            </div>
+            <div className="crm-modal__footer">
+              <button className="crm-btn crm-btn--secondary" onClick={() => setEditInvOpen(null)}>Отмена</button>
+              <button className="crm-btn crm-btn--primary" onClick={handleEditInvitation} disabled={!editTitle.trim() || updatingInv}>
                 {updatingInv ? 'Сохранение...' : 'Сохранить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <Dialog open={addGuestOpen !== null} onOpenChange={(_, data) => !data.open && setAddGuestOpen(null)}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Добавить гостя</DialogTitle>
-            <DialogContent className="crm-add-guest-form">
-              <Label>Откуда добавить?</Label>
-              <RadioGroup value={addGuestMode} onChange={(_, d) => setAddGuestMode(d.value as 'existing' | 'new')} layout="horizontal">
-                <Radio value="existing" label="Выбрать из списка гостей" />
-                <Radio value="new" label="Создать нового гостя" />
-              </RadioGroup>
+      {addGuestOpen !== null && (
+        <div className="crm-overlay" onClick={() => setAddGuestOpen(null)}>
+          <div className="crm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="crm-modal__header">
+              <h2 className="crm-modal__title">Добавить гостя</h2>
+              <button className="crm-icon-btn" onClick={() => setAddGuestOpen(null)}><SvgIcon name="close" /></button>
+            </div>
+            <div className="crm-modal__body crm-add-guest-form">
+              <label className="crm-label">Откуда добавить?</label>
+              <div className="crm-radio-group">
+                <label className="crm-radio">
+                  <input
+                    type="radio"
+                    name="addGuestMode"
+                    value="existing"
+                    checked={addGuestMode === 'existing'}
+                    onChange={() => setAddGuestMode('existing')}
+                  />
+                  <span className="crm-radio__dot" />
+                  <span>Выбрать из списка гостей</span>
+                </label>
+                <label className="crm-radio">
+                  <input
+                    type="radio"
+                    name="addGuestMode"
+                    value="new"
+                    checked={addGuestMode === 'new'}
+                    onChange={() => setAddGuestMode('new')}
+                  />
+                  <span className="crm-radio__dot" />
+                  <span>Создать нового гостя</span>
+                </label>
+              </div>
               {addGuestMode === 'existing' ? (
                 <>
-                  <Label htmlFor="guestSelect">Гость</Label>
-                  <Dropdown
+                  <label className="crm-label" htmlFor="guestSelect">Гость</label>
+                  <select
+                    className="crm-select"
                     id="guestSelect"
-                    placeholder="Выберите гостя"
-                    value={allGuests.find((g) => String(g.id) === selectedGuestId)?.fullName ?? ''}
-                    selectedOptions={selectedGuestId ? [selectedGuestId] : []}
-                    onOptionSelect={(_, data) => setSelectedGuestId(data.optionValue ?? '')}
+                    value={selectedGuestId}
+                    onChange={(e) => setSelectedGuestId(e.target.value)}
                   >
+                    <option value="">Выберите гостя</option>
                     {allGuests.map((g) => (
-                      <Option key={g.id} value={String(g.id)} text={g.phone ? `${g.fullName} · ${g.phone}` : g.fullName}>
-                        {g.fullName}
-                        {g.phone && ` · ${g.phone}`}
-                      </Option>
+                      <option key={g.id} value={String(g.id)}>
+                        {g.fullName}{g.phone ? ` · ${g.phone}` : ''}
+                      </option>
                     ))}
-                  </Dropdown>
+                  </select>
                 </>
               ) : (
                 <>
-                  <Label htmlFor="fullName">ФИО</Label>
-                  <Input id="fullName" value={newGuestFullName} onChange={(_, d) => setNewGuestFullName(d.value)} placeholder="Иванов Иван Иванович" />
-                  <Label htmlFor="phone">Телефон</Label>
-                  <Input id="phone" value={newGuestPhone} onChange={(_, d) => setNewGuestPhone(formatPhoneInput(d.value))} placeholder="+7 900 123-45-67" />
-                  <Label>Пол</Label>
-                  <RadioGroup value={newGuestGender} onChange={(_, d) => setNewGuestGender(d.value)} layout="horizontal">
-                    <Radio value="male" label="М" />
-                    <Radio value="female" label="Ж" />
-                  </RadioGroup>
+                  <label className="crm-label" htmlFor="fullName">ФИО</label>
+                  <input className="crm-input" id="fullName" value={newGuestFullName} onChange={(e) => setNewGuestFullName(e.target.value)} placeholder="Иванов Иван Иванович" />
+                  <label className="crm-label" htmlFor="phone">Телефон</label>
+                  <input className="crm-input" id="phone" value={newGuestPhone} onChange={(e) => setNewGuestPhone(formatPhoneInput(e.target.value))} placeholder="+7 900 123-45-67" />
+                  <label className="crm-label">Пол</label>
+                  <div className="crm-radio-group crm-radio-group--row">
+                    <label className="crm-radio">
+                      <input type="radio" name="newGuestGender" value="male" checked={newGuestGender === 'male'} onChange={() => setNewGuestGender('male')} />
+                      <span className="crm-radio__dot" />
+                      <span>М</span>
+                    </label>
+                    <label className="crm-radio">
+                      <input type="radio" name="newGuestGender" value="female" checked={newGuestGender === 'female'} onChange={() => setNewGuestGender('female')} />
+                      <span className="crm-radio__dot" />
+                      <span>Ж</span>
+                    </label>
+                  </div>
                 </>
               )}
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" icon={<Dismiss24Regular />} onClick={() => setAddGuestOpen(null)}>Отмена</Button>
-              <Button
-                appearance="primary"
+            </div>
+            <div className="crm-modal__footer">
+              <button className="crm-btn crm-btn--secondary" onClick={() => setAddGuestOpen(null)}>Отмена</button>
+              <button
+                className="crm-btn crm-btn--primary"
                 onClick={handleAddGuest}
                 disabled={
                   addingGuest ||
@@ -406,166 +455,132 @@ export default function CrmPage() {
                 }
               >
                 {addingGuest ? 'Добавление...' : 'Добавить'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {successMessage && (
-        <MessageBar intent="success" className="crm-message">
-          <MessageBarBody>{successMessage}</MessageBarBody>
-        </MessageBar>
+        <div className="crm-alert crm-alert--success">
+          <SvgIcon name="check" size={14} />
+          <span>{successMessage}</span>
+        </div>
       )}
       {error && (
-        <MessageBar intent="error" className="crm-message">
-          <MessageBarBody>{error}</MessageBarBody>
-        </MessageBar>
+        <div className="crm-alert crm-alert--error">
+          <SvgIcon name="close" size={14} />
+          <span>{error}</span>
+          <button className="crm-icon-btn crm-alert__dismiss" onClick={() => setError(null)}>
+            <SvgIcon name="close" size={12} />
+          </button>
+        </div>
       )}
 
-      <div className="crm-tree-container">
+      <div className="crm-list">
         {invitations.length === 0 ? (
-          <p className="crm-empty">Нет приглашений.</p>
+          <div className="crm-empty">
+            <SvgIcon name="mail" size={32} />
+            <p>Нет приглашений. Создайте первое приглашение, чтобы начать.</p>
+          </div>
         ) : (
-          <Tree aria-label="Список приглашений" appearance="subtle" size="medium">
-            {invitations.map((inv) => (
-              <TreeItem
+          invitations.map((inv) => {
+            const isExpanded = expandedIds.has(inv.id)
+            return (
+              <div
                 key={inv.id}
-                itemType={inv.guests.length > 0 ? 'branch' : 'leaf'}
-                value={`inv-${inv.id}`}
-                className={inv.confirmedAt ? 'crm-inv--confirmed' : 'crm-inv--unconfirmed'}
+                className={`crm-card ${inv.confirmedAt ? 'crm-card--confirmed' : 'crm-card--pending'}`}
               >
-                <TreeItemLayout
-                  className={inv.confirmedAt ? 'crm-inv--confirmed' : 'crm-inv--unconfirmed'}
-                  aside={
-                    <span className="crm-inv-actions">
-                      <Button
-                        appearance="subtle"
-                        size="small"
-                        icon={<Link24Regular />}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleCopyLink(inv)
-                        }}
-                        aria-label="Копировать ссылку"
-                        title={getInvitationLink(inv.slug)}
-                      >
-                        Ссылка
-                      </Button>
-                      <Button
-                        appearance="subtle"
-                        size="small"
-                        icon={<Edit24Regular />}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setEditInvOpen(inv)
-                        }}
-                        aria-label="Редактировать"
-                      >
-                        Изменить
-                      </Button>
-                      <Button
-                        appearance="subtle"
-                        size="small"
-                        icon={<PersonAdd24Regular />}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setAddGuestOpen(inv.id)
-                        }}
-                        aria-label="Добавить гостя"
-                      >
-                        Гость
-                      </Button>
-                      <Button
-                        appearance="subtle"
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDelete(inv.id, inv.title)
-                        }}
-                        aria-label={`Удалить ${inv.title}`}
-                      >
-                        Удалить
-                      </Button>
-                    </span>
-                  }
-                >
-                  <div className="crm-inv-title-row">
-                    <span>{inv.title}</span>
-                    {inv.guests.length > 0 && (
-                      <span className="crm-guest-count"> ({inv.guests.length})</span>
-                    )}
-                  </div>
-                  <div className="crm-inv-link-row">
-                    <span className="crm-inv-link" title="Нажмите, чтобы скопировать" onClick={(e) => { e.stopPropagation(); handleCopyLink(inv) }}>
+                <div className="crm-card__header" onClick={() => toggleExpand(inv.id)}>
+                  <span className={`crm-chevron ${isExpanded ? 'crm-chevron--open' : ''}`}>
+                    <SvgIcon name="chevron" size={14} />
+                  </span>
+                  <div className="crm-card__info">
+                    <div className="crm-card__title">
+                      <span>{inv.title}</span>
+                      {inv.guests.length > 0 && (
+                        <span className="crm-badge">{inv.guests.length}</span>
+                      )}
+                    </div>
+                    <span
+                      className="crm-card__link"
+                      title="Нажмите, чтобы скопировать"
+                      onClick={(e) => { e.stopPropagation(); handleCopyLink(inv) }}
+                    >
                       {getInvitationLink(inv.slug)}
                     </span>
                   </div>
-                </TreeItemLayout>
-                {inv.guests.length > 0 && (
-                  <Tree>
-                    {inv.guests
-                      .sort((a, b) => a.sortOrder - b.sortOrder)
-                      .map((g) => (
-                        <TreeItem
-                          key={g.id}
-                          itemType="leaf"
-                          value={`guest-${g.id}`}
-                          className={inv.confirmedAt ? 'crm-guest--confirmed' : 'crm-guest--unconfirmed'}
-                          draggable
-                          onDragStart={() => setDragGuest({ invId: inv.id, guestId: g.id })}
-                          onDragOver={handleGuestDragOver}
-                          onDrop={() => handleGuestDrop(inv.id, g.id)}
-                          style={{ cursor: 'grab' }}
-                        >
-                          <TreeItemLayout className={inv.confirmedAt ? 'crm-guest--confirmed' : 'crm-guest--unconfirmed'}
-                            aside={
-                              <Button
-                                appearance="subtle"
-                                size="small"
-                                icon={<Delete24Regular />}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleRemoveGuest(inv.id, g.id, g.name)
-                                }}
-                                aria-label={`Удалить ${g.name}`}
-                              />
-                            }
-                          >
-                            {g.name}
-                            {g.phone && <span className="crm-guest-phone"> · {g.phone}</span>}
-                          </TreeItemLayout>
-                        </TreeItem>
-                      ))}
-                  </Tree>
-                )}
-                {(inv.surveyResponses?.length ?? 0) > 0 && (
-                  <Tree>
-                    <TreeItem itemType="branch" value={`inv-${inv.id}-responses`}>
-                      <TreeItemLayout>Ответы на опросы</TreeItemLayout>
-                      <Tree>
+                  <div className="crm-card__actions" onClick={(e) => e.stopPropagation()}>
+                    <button className="crm-icon-btn" title="Копировать ссылку" onClick={() => handleCopyLink(inv)}>
+                      <SvgIcon name="link" />
+                    </button>
+                    <button className="crm-icon-btn" title="Редактировать" onClick={() => setEditInvOpen(inv)}>
+                      <SvgIcon name="edit" />
+                    </button>
+                    <button className="crm-icon-btn" title="Добавить гостя" onClick={() => setAddGuestOpen(inv.id)}>
+                      <SvgIcon name="person" />
+                    </button>
+                    <button className="crm-icon-btn crm-icon-btn--danger" title="Удалить" onClick={() => handleDelete(inv.id, inv.title)}>
+                      <SvgIcon name="trash" />
+                    </button>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="crm-card__body">
+                    {inv.guests.length > 0 && (
+                      <div className="crm-guests">
+                        {inv.guests
+                          .sort((a, b) => a.sortOrder - b.sortOrder)
+                          .map((g) => (
+                            <div
+                              key={g.id}
+                              className={`crm-guest ${dragGuest?.guestId === g.id ? 'crm-guest--dragging' : ''}`}
+                              draggable
+                              onDragStart={() => setDragGuest({ invId: inv.id, guestId: g.id })}
+                              onDragOver={handleGuestDragOver}
+                              onDrop={() => handleGuestDrop(inv.id, g.id)}
+                            >
+                              <span className="crm-guest__grip">⠿</span>
+                              <span className="crm-guest__name">{g.name}</span>
+                              {g.phone && <span className="crm-guest__phone">{g.phone}</span>}
+                              <button
+                                className="crm-icon-btn crm-icon-btn--sm crm-icon-btn--danger"
+                                onClick={() => handleRemoveGuest(inv.id, g.id, g.name)}
+                                title="Удалить гостя"
+                              >
+                                <SvgIcon name="trash" size={13} />
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {(inv.surveyResponses?.length ?? 0) > 0 && (
+                      <div className="crm-surveys">
+                        <div className="crm-surveys__title">Ответы на опросы</div>
                         {(inv.surveyResponses ?? []).map((sr) => (
-                          <TreeItem key={`${inv.id}-${sr.surveyId}-${sr.createdAt}`} itemType="leaf" value={`resp-${sr.surveyId}`}>
-                            <TreeItemLayout>
-                              <div className="crm-survey-responses">
-                                <div className="crm-survey-response-title">{sr.surveyTitle}</div>
-                                {sr.items.map((item, idx) => (
-                                  <div key={idx} className="crm-survey-response-item">
-                                    <span className="crm-survey-question">{item.questionText}:</span>{' '}
-                                    <span className="crm-survey-answer">{item.selectedOptions.join(', ')}</span>
-                                  </div>
-                                ))}
+                          <div key={`${inv.id}-${sr.surveyId}-${sr.createdAt}`} className="crm-survey">
+                            <div className="crm-survey__title">{sr.surveyTitle}</div>
+                            {sr.items.map((item, idx) => (
+                              <div key={idx} className="crm-survey__item">
+                                <span className="crm-survey__question">{item.questionText}:</span>
+                                <span className="crm-survey__answer">{item.selectedOptions.join(', ')}</span>
                               </div>
-                            </TreeItemLayout>
-                          </TreeItem>
+                            ))}
+                          </div>
                         ))}
-                      </Tree>
-                    </TreeItem>
-                  </Tree>
+                      </div>
+                    )}
+
+                    {inv.guests.length === 0 && (inv.surveyResponses?.length ?? 0) === 0 && (
+                      <p className="crm-card__empty">Нет гостей. Нажмите «Добавить гостя».</p>
+                    )}
+                  </div>
                 )}
-              </TreeItem>
-            ))}
-          </Tree>
+              </div>
+            )
+          })
         )}
       </div>
     </div>

@@ -1,32 +1,32 @@
-import { useState, useEffect } from 'react'
-import {
-  Button,
-  Spinner,
-  MessageBar,
-  MessageBarBody,
-  Dialog,
-  DialogTrigger,
-  DialogSurface,
-  DialogTitle,
-  DialogBody,
-  DialogActions,
-  DialogContent,
-  Input,
-  Label,
-  Radio,
-  RadioGroup,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  TableHeader,
-  TableHeaderCell
-} from '@fluentui/react-components'
-import { Add24Regular, Dismiss24Regular, Edit24Regular, Delete24Regular, ArrowDownload24Regular } from '@fluentui/react-icons'
+import { useState, useEffect, useMemo } from 'react'
 import { fetchGuests, createGuest, updateGuest, deleteGuest, fetchInvitations } from '../api'
 import type { GuestListItem } from '../types'
 import { formatPhoneInput, downloadCsv } from '../utils'
 import './GuestsPage.css'
+
+function SvgIcon({ name, size }: { name: string; size?: number }) {
+  const s = size ?? 16
+  switch (name) {
+    case 'add':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+    case 'close':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+    case 'edit':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.3" fill="none" /></svg>
+    case 'trash':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M3 4h10M6 4V3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1M5 4v9a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V4" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" /></svg>
+    case 'download':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M8 2v9M4 7l4 4 4-4M3 13h10" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    case 'search':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="3.5" stroke="currentColor" strokeWidth="1.3" fill="none" /><path d="M10 10l3 3" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinecap="round" /></svg>
+    case 'user':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.3" fill="none" /><path d="M3 14c0-2.5 2-4 5-4s5 1.5 5 4" stroke="currentColor" strokeWidth="1.3" fill="none" /></svg>
+    case 'check':
+      return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M3 8l3 3 7-7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    default:
+      return null
+  }
+}
 
 export default function GuestsPage() {
   const [guests, setGuests] = useState<GuestListItem[]>([])
@@ -43,6 +43,7 @@ export default function GuestsPage() {
   const [editGender, setEditGender] = useState('male')
   const [updating, setUpdating] = useState(false)
   const [guestConfirmedById, setGuestConfirmedById] = useState<Set<number>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     Promise.all([fetchGuests(), fetchInvitations()])
@@ -67,6 +68,16 @@ export default function GuestsPage() {
       setEditGender(editGuestOpen.gender)
     }
   }, [editGuestOpen])
+
+  const filteredGuests = useMemo(() => {
+    if (!searchQuery.trim()) return guests
+    const q = searchQuery.toLowerCase().trim()
+    return guests.filter(
+      (g) =>
+        g.fullName.toLowerCase().includes(q) ||
+        (g.phone && g.phone.toLowerCase().includes(q))
+    )
+  }, [guests, searchQuery])
 
   const handleCreate = async () => {
     if (!fullName.trim()) return
@@ -125,7 +136,8 @@ export default function GuestsPage() {
     return (
       <div className="guests-page">
         <div className="guests-loading">
-          <Spinner size="large" label="Загрузка..." />
+          <div className="guests-spinner" />
+          <span className="guests-loading-text">Загрузка...</span>
         </div>
       </div>
     )
@@ -134,11 +146,10 @@ export default function GuestsPage() {
   return (
     <div className="guests-page">
       <header className="guests-header">
-        <h1>Гости</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <Button
-            appearance="subtle"
-            icon={<ArrowDownload24Regular />}
+        <h1 className="guests-header__title">Гости</h1>
+        <div className="guests-header__actions">
+          <button
+            className="guests-btn guests-btn--subtle"
             onClick={async () => {
               try {
                 await downloadCsv('/api/export/guests', 'guests.csv')
@@ -147,135 +158,175 @@ export default function GuestsPage() {
               }
             }}
           >
+            <SvgIcon name="download" />
             Экспорт
-          </Button>
-          <Dialog open={createOpen} onOpenChange={(_, data) => setCreateOpen(data.open)}>
-            <DialogTrigger disableButtonEnhancement>
-              <Button icon={<Add24Regular />} appearance="primary">
-                Добавить гостя
-              </Button>
-            </DialogTrigger>
-            <DialogSurface>
-              <DialogBody>
-                <DialogTitle>Новый гость</DialogTitle>
-                <DialogContent className="guests-form">
-                  <Label htmlFor="fullName">ФИО</Label>
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(_, d) => setFullName(d.value)}
-                    placeholder="Иванов Иван Иванович"
-                    required
-                  />
-                  <Label htmlFor="phone">Телефон</Label>
-                  <Input
-                    id="phone"
-                    value={phone}
-                    onChange={(_, d) => setPhone(formatPhoneInput(d.value))}
-                    placeholder="+7 900 123-45-67"
-                  />
-                  <Label>Пол</Label>
-                  <RadioGroup value={gender} onChange={(_, d) => setGender(d.value)} layout="horizontal">
-                    <Radio value="male" label="М" />
-                    <Radio value="female" label="Ж" />
-                  </RadioGroup>
-                </DialogContent>
-                <DialogActions>
-                  <DialogTrigger disableButtonEnhancement>
-                    <Button appearance="secondary" icon={<Dismiss24Regular />}>
-                      Отмена
-                    </Button>
-                  </DialogTrigger>
-                  <Button
-                    appearance="primary"
-                    onClick={handleCreate}
-                    disabled={!fullName.trim() || creating}
-                  >
-                    {creating ? 'Создание...' : 'Добавить'}
-                  </Button>
-                </DialogActions>
-              </DialogBody>
-            </DialogSurface>
-          </Dialog>
-
+          </button>
+          <button className="guests-btn guests-btn--primary" onClick={() => setCreateOpen(true)}>
+            <SvgIcon name="add" />
+            Добавить гостя
+          </button>
         </div>
-
-        <Dialog open={editGuestOpen !== null} onOpenChange={(_, data) => !data.open && setEditGuestOpen(null)}>
-          <DialogSurface>
-            <DialogBody>
-              <DialogTitle>Редактировать гостя</DialogTitle>
-              <DialogContent className="guests-form">
-                <Label htmlFor="editFullName">ФИО</Label>
-                <Input id="editFullName" value={editFullName} onChange={(_, d) => setEditFullName(d.value)} placeholder="Иванов Иван Иванович" />
-                <Label htmlFor="editPhone">Телефон</Label>
-                <Input id="editPhone" value={editPhone} onChange={(_, d) => setEditPhone(formatPhoneInput(d.value))} placeholder="+7 900 123-45-67" />
-                <Label>Пол</Label>
-                <RadioGroup value={editGender} onChange={(_, d) => setEditGender(d.value)} layout="horizontal">
-                  <Radio value="male" label="М" />
-                  <Radio value="female" label="Ж" />
-                </RadioGroup>
-              </DialogContent>
-              <DialogActions>
-                <Button appearance="secondary" icon={<Dismiss24Regular />} onClick={() => setEditGuestOpen(null)}>Отмена</Button>
-                <Button appearance="primary" onClick={handleEditGuest} disabled={!editFullName.trim() || updating}>
-                  {updating ? 'Сохранение...' : 'Сохранить'}
-                </Button>
-              </DialogActions>
-            </DialogBody>
-          </DialogSurface>
-        </Dialog>
       </header>
 
-      {error && (
-        <MessageBar intent="error" className="guests-message">
-          <MessageBarBody>{error}</MessageBarBody>
-        </MessageBar>
+      <div className="guests-toolbar">
+        <div className="guests-search">
+          <SvgIcon name="search" size={14} />
+          <input
+            className="guests-search__input"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Поиск по имени или телефону..."
+          />
+          {searchQuery && (
+            <button className="guests-search__clear" onClick={() => setSearchQuery('')}>
+              <SvgIcon name="close" size={13} />
+            </button>
+          )}
+        </div>
+        <span className="guests-count">
+          {filteredGuests.length} / {guests.length}
+        </span>
+      </div>
+
+      {createOpen && (
+        <div className="guests-overlay" onClick={() => setCreateOpen(false)}>
+          <div className="guests-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="guests-modal__header">
+              <h2 className="guests-modal__title">Новый гость</h2>
+              <button className="guests-icon-btn" onClick={() => setCreateOpen(false)}><SvgIcon name="close" /></button>
+            </div>
+            <div className="guests-modal__body">
+              <label className="guests-label" htmlFor="fullName">ФИО</label>
+              <input
+                className="guests-input"
+                id="fullName"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Иванов Иван Иванович"
+                required
+              />
+              <label className="guests-label" htmlFor="phone">Телефон</label>
+              <input
+                className="guests-input"
+                id="phone"
+                value={phone}
+                onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                placeholder="+7 900 123-45-67"
+              />
+              <label className="guests-label">Пол</label>
+              <div className="guests-radio-group guests-radio-group--row">
+                <label className="guests-radio">
+                  <input type="radio" name="gender" value="male" checked={gender === 'male'} onChange={() => setGender('male')} />
+                  <span className="guests-radio__dot" />
+                  <span>М</span>
+                </label>
+                <label className="guests-radio">
+                  <input type="radio" name="gender" value="female" checked={gender === 'female'} onChange={() => setGender('female')} />
+                  <span className="guests-radio__dot" />
+                  <span>Ж</span>
+                </label>
+              </div>
+            </div>
+            <div className="guests-modal__footer">
+              <button className="guests-btn guests-btn--secondary" onClick={() => setCreateOpen(false)}>Отмена</button>
+              <button className="guests-btn guests-btn--primary" onClick={handleCreate} disabled={!fullName.trim() || creating}>
+                {creating ? 'Создание...' : 'Добавить'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
-      <div className="guests-list">
-        {guests.length === 0 ? (
-          <p className="guests-empty">Нет гостей. Добавьте гостей в этом разделе, затем назначайте их приглашениям.</p>
+      {editGuestOpen !== null && (
+        <div className="guests-overlay" onClick={() => setEditGuestOpen(null)}>
+          <div className="guests-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="guests-modal__header">
+              <h2 className="guests-modal__title">Редактировать гостя</h2>
+              <button className="guests-icon-btn" onClick={() => setEditGuestOpen(null)}><SvgIcon name="close" /></button>
+            </div>
+            <div className="guests-modal__body">
+              <label className="guests-label" htmlFor="editFullName">ФИО</label>
+              <input className="guests-input" id="editFullName" value={editFullName} onChange={(e) => setEditFullName(e.target.value)} placeholder="Иванов Иван Иванович" />
+              <label className="guests-label" htmlFor="editPhone">Телефон</label>
+              <input className="guests-input" id="editPhone" value={editPhone} onChange={(e) => setEditPhone(formatPhoneInput(e.target.value))} placeholder="+7 900 123-45-67" />
+              <label className="guests-label">Пол</label>
+              <div className="guests-radio-group guests-radio-group--row">
+                <label className="guests-radio">
+                  <input type="radio" name="editGender" value="male" checked={editGender === 'male'} onChange={() => setEditGender('male')} />
+                  <span className="guests-radio__dot" />
+                  <span>М</span>
+                </label>
+                <label className="guests-radio">
+                  <input type="radio" name="editGender" value="female" checked={editGender === 'female'} onChange={() => setEditGender('female')} />
+                  <span className="guests-radio__dot" />
+                  <span>Ж</span>
+                </label>
+              </div>
+            </div>
+            <div className="guests-modal__footer">
+              <button className="guests-btn guests-btn--secondary" onClick={() => setEditGuestOpen(null)}>Отмена</button>
+              <button className="guests-btn guests-btn--primary" onClick={handleEditGuest} disabled={!editFullName.trim() || updating}>
+                {updating ? 'Сохранение...' : 'Сохранить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="guests-alert guests-alert--error">
+          <SvgIcon name="close" size={14} />
+          <span>{error}</span>
+          <button className="guests-icon-btn guests-alert__dismiss" onClick={() => setError(null)}>
+            <SvgIcon name="close" size={12} />
+          </button>
+        </div>
+      )}
+
+      <div className="guests-table-wrap">
+        {filteredGuests.length === 0 ? (
+          <div className="guests-empty">
+            <SvgIcon name="user" size={32} />
+            {searchQuery ? (
+              <p>Ничего не найдено по запросу «{searchQuery}».</p>
+            ) : (
+              <p>Нет гостей. Добавьте гостей в этом разделе, затем назначайте их приглашениям.</p>
+            )}
+          </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHeaderCell>ФИО</TableHeaderCell>
-                <TableHeaderCell>Телефон</TableHeaderCell>
-                <TableHeaderCell>Пол</TableHeaderCell>
-                <TableHeaderCell></TableHeaderCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {[...guests]
+          <table className="guests-table">
+            <thead>
+              <tr>
+                <th>ФИО</th>
+                <th>Телефон</th>
+                <th>Пол</th>
+                <th className="guests-table__actions-col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredGuests
                 .sort((a, b) => a.fullName.localeCompare(b.fullName))
                 .map((g) => (
-                  <TableRow
+                  <tr
                     key={g.id}
                     className={guestConfirmedById.has(g.id) ? 'guests-row--confirmed' : 'guests-row--unconfirmed'}
                   >
-                    <TableCell>{g.fullName}</TableCell>
-                    <TableCell>{g.phone ?? '—'}</TableCell>
-                    <TableCell>{g.gender === 'male' ? 'М' : 'Ж'}</TableCell>
-                    <TableCell>
-                      <Button
-                        appearance="subtle"
-                        size="small"
-                        icon={<Edit24Regular />}
-                        onClick={() => setEditGuestOpen(g)}
-                        aria-label="Редактировать"
-                      />
-                      <Button
-                        appearance="subtle"
-                        size="small"
-                        icon={<Delete24Regular />}
-                        onClick={() => handleDeleteGuest(g)}
-                        aria-label="Удалить"
-                      />
-                    </TableCell>
-                  </TableRow>
+                    <td className="guests-table__name">{g.fullName}</td>
+                    <td className="guests-table__phone">{g.phone ?? '—'}</td>
+                    <td>{g.gender === 'male' ? 'М' : 'Ж'}</td>
+                    <td className="guests-table__actions">
+                      <button className="guests-icon-btn guests-icon-btn--sm" onClick={() => setEditGuestOpen(g)} title="Редактировать">
+                        <SvgIcon name="edit" size={14} />
+                      </button>
+                      <button className="guests-icon-btn guests-icon-btn--sm guests-icon-btn--danger" onClick={() => handleDeleteGuest(g)} title="Удалить">
+                        <SvgIcon name="trash" size={14} />
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         )}
       </div>
     </div>
