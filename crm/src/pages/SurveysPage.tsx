@@ -1,19 +1,19 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
-  fetchSurveys,
-  fetchSurvey,
-  createSurvey,
-  updateSurvey,
-  deleteSurvey,
-  createQuestion,
-  updateQuestion,
-  deleteQuestion,
-  reorderQuestions,
-  createOption,
-  updateOption,
-  deleteOption
+    fetchSurveys,
+    fetchSurvey,
+    createSurvey,
+    updateSurvey,
+    deleteSurvey,
+    createQuestion,
+    updateQuestion,
+    deleteQuestion,
+    reorderQuestions,
+    createOption,
+    updateOption,
+    deleteOption
 } from '../api'
-import type { Survey, SurveyQuestion, SurveyQuestionOption } from '../types'
+  import type { Survey, SurveyQuestion, SurveyQuestionOption } from '../types'
 import './SurveysPage.css'
 
 const SvgIcon = ({ d, size = 20 }: { d: string; size?: number }) => (
@@ -131,18 +131,6 @@ export default function SurveysPage() {
     if (editOptionOpen) editOptionDialogRef.current?.showModal()
     else editOptionDialogRef.current?.close()
   }, [editOptionOpen])
-
-  const closeDialogOnBackdrop = useCallback((dialog: HTMLDialogElement | null, close: () => void) => {
-    if (!dialog) return
-    const handler = (e: MouseEvent) => {
-      const rect = dialog.getBoundingClientRect()
-      if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
-        close()
-      }
-    }
-    dialog.addEventListener('click', handler)
-    return () => dialog.removeEventListener('click', handler)
-  }, [])
 
   const handleCreateSurvey = async () => {
     if (!newTitle.trim()) return
